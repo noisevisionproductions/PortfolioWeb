@@ -14,9 +14,7 @@ export const translations = {
             description: "Specjalizuję się w tworzeniu aplikacji Android oraz Web."
         },
         projectSection: {
-            projects: "Projekty",
-            projectName: "Nazwa projektu",
-            projectDescription: "opis projektu"
+            title: "Projekty",
         },
         contactSection: {
             contact: "Kontakt",
@@ -39,9 +37,7 @@ export const translations = {
             description: "I specialize in creating Android and Web applications."
         },
         projectSection: {
-            projects: "Projects",
-            projectName: "Nazwa projektu",
-            projectDescription: "opis projektu"
+            title: "Projects"
         },
         contactSection: {
             contact: "Contact",

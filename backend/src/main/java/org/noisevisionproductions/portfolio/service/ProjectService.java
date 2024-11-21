@@ -1,6 +1,7 @@
 package org.noisevisionproductions.portfolio.service;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.noisevisionproductions.portfolio.model.ProjectImageModel;
 import org.noisevisionproductions.portfolio.model.ProjectModel;
 import org.noisevisionproductions.portfolio.repository.ProjectImageRepository;
@@ -12,15 +13,10 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectImageRepository projectImageRepository;
-
-    @Autowired
-    public ProjectService(ProjectRepository projectRepository, ProjectImageRepository projectImageRepository) {
-        this.projectRepository = projectRepository;
-        this.projectImageRepository = projectImageRepository;
-    }
 
     public ProjectModel createProject(ProjectModel projectModel) {
         return projectRepository.save(projectModel);

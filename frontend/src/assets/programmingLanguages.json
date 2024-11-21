@@ -1,0 +1,18 @@
+{
+  "languages": [
+    "JavaScript",
+    "TypeScript",
+    "Python",
+    "Java",
+    "C++",
+    "C#",
+    "Ruby",
+    "PHP",
+    "Swift",
+    "Go"
+  ],
+  "other": {
+    "en": "Other",
+    "pl": "Inne"
+  }
+}

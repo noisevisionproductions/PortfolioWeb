@@ -6,7 +6,7 @@ export const projectService = {
             const response = await api.get('/projects');
             return response.data;
         } catch (error) {
-            console.error('Error fetching projects:', error)
+            console.error('Error fetching projectSection:', error)
             throw error;
         }
     },

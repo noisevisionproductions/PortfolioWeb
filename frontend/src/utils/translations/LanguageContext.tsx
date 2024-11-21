@@ -3,10 +3,12 @@ import {Language, translations} from "./translations";
 
 const LanguageContext = createContext<{
     language: Language;
+    currentLanguage: Language;
     setLanguage: (lang: Language) => void;
     t: (key: string) => string;
 }>({
     language: 'pl',
+    currentLanguage: 'pl',
     setLanguage: () => {
     },
     t: () => ''
@@ -20,8 +22,10 @@ export const LanguageProvider = ({children}: { children: React.ReactNode }) => {
         return path.split('.').reduce((obj, key) => obj[key], translations[language]) as unknown as string;
     };
 
+    const currentLanguage = language;
+
     return (
-        <LanguageContext.Provider value={{language, setLanguage, t}}>
+        <LanguageContext.Provider value={{language, currentLanguage, setLanguage, t}}>
             {children}
         </LanguageContext.Provider>
     );

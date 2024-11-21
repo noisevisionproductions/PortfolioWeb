@@ -1,5 +1,12 @@
 package org.noisevisionproductions.portfolio.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.noisevisionproductions.portfolio.dataTransferObjects.ProjectDTO;
 import org.noisevisionproductions.portfolio.dataTransferObjects.ProjectImageDTO;
 import org.noisevisionproductions.portfolio.model.ProjectImageModel;
@@ -14,15 +21,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/projects")
+@Tag(name = "Projects", description = "API do zarządzania projektami i ich obrazami")
 public class ProjectController {
     private final ProjectService projectService;
 
-    @Autowired
-    public ProjectController(ProjectService projectService) {
-        this.projectService = projectService;
-    }
-
+    @Operation(summary = "Pobiera wszystkie projekty",
+            description = "Zwraca listę wszystkich dostępnych projektów wraz z ich obrazami")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Znaleziono projekty",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProjectDTO.class))),
+            @ApiResponse(responseCode = "404",
+                    description = "Nie znaleziono żadnych projektów")
+    })
     @GetMapping
     public ResponseEntity<List<ProjectDTO>> getAllProjects() {
         List<ProjectModel> projects = projectService.getAllProjects();

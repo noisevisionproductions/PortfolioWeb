@@ -32,6 +32,10 @@ public class UserModel implements UserDetails {
     private Role role = Role.USER;
 
     @ElementCollection
+    @CollectionTable(
+            name = "users_programming_languages",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
     private Set<String> programmingLanguages = new HashSet<>();
 
     @Override

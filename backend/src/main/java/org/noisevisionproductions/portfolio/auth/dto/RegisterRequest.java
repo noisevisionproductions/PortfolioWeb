@@ -3,16 +3,18 @@ package org.noisevisionproductions.portfolio.auth.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.ToString;
 
 import java.util.Set;
 
 public record RegisterRequest(
-        @Email(message = "Invalid email format")
-        @NotBlank(message = "Email is required")
+        @Email(message = "invalidEmail")
+        @NotBlank(message = "emailRequired")
         String email,
 
-        @NotBlank(message = "Password is required")
-        @Size(min = 6, message = "Password must be at least 6 characters long")
+        @NotBlank(message = "passwordRequired")
+        @Size(min = 6, message = "passwordLength")
+        @ToString.Exclude
         String password,
         String name,
         String companyName,

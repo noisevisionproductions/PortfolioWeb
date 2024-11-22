@@ -14,10 +14,12 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> handleRuntimeException(RuntimeException exception) {
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException exception) {
+        String errorKey = mapErrorMessageToKey(exception.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("error", errorKey);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(exception.getMessage());
+                .body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -33,5 +35,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
+    }
+
+    private String mapErrorMessageToKey(String message) {
+        if (message == null) return "generic";
+
+        System.out.println("Error message to map: " + message);
+
+        // Konwertujemy do małych liter dla uniknięcia problemów z wielkością znaków
+        String lowerCaseMessage = message.toLowerCase();
+
+        if (lowerCaseMessage.contains("registration is blocked")) {
+            return "registrationBlocked";
+        }
+        if (lowerCaseMessage.contains("email already exists")) {
+            return "emailExists";
+        }
+
+        return "generic";
     }
 }

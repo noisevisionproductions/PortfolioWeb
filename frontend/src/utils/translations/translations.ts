@@ -24,7 +24,16 @@ export const translations = {
             password: "Wprowadź hasło",
             confirmPassword: "Potwierdź hasło",
             submit: "Utwórz konto",
-            title: "Tworzenie nowego konta"
+            title: "Tworzenie nowego konta",
+            errors: {
+                emailExists: "Ten email jest już zajęty",
+                passwordLength: "Hasło musi mieć co najmniej 6 znaków",
+                emailRequired: "Email jest wymagany",
+                passwordRequired: "Hasło jest wymagane",
+                invalidEmail: "Nieprawidłowy format email",
+                generic: "Wystąpił błąd podczas rejestracji",
+                registrationBlocked: "Nie możesz utworzyć nowego konta przez godzinę od ostatniej rejestracji.",
+            }
         },
         heroSection: {
             title: "Software Developer",
@@ -64,7 +73,16 @@ export const translations = {
             password: "Enter password",
             confirmPassword: "Confirm password",
             submit: "Create account",
-            title: "New account creating"
+            title: "New account creating",
+            errors: {
+                emailExists: "This email is already taken",
+                passwordLength: "Password must be at least 6 characters long",
+                emailRequired: "Email is required",
+                passwordRequired: "Password is required",
+                invalidEmail: "Invalid email format",
+                generic: "Registration failed",
+                registrationBlocked: "You cannot create a new account for one hour after the last registration.",
+            }
         },
         heroSection: {
             title: "Software Developer",

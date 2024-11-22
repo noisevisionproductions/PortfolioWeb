@@ -3,15 +3,20 @@ import {Header} from "../Header";
 import {useLanguage} from "../../../utils/translations/LanguageContext";
 import {Eye, EyeOff} from "lucide-react";
 import programmingLanguages from '../../../assets/programmingLanguages.json'
+import {authService} from "../../../services/authService";
+import {RegisterRequest} from "../../../types/auth";
+import {useNavigate} from "react-router-dom";
 
 const RegisterForm: React.FC = () => {
+    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [confirmPassword] = useState('');
     const [name, setName] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+    const [error, setError] = useState<string>('');
+    const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
     const {t, currentLanguage} = useLanguage();
 
     const allLanguages = [
@@ -19,17 +24,36 @@ const RegisterForm: React.FC = () => {
         programmingLanguages.other[currentLanguage as keyof typeof programmingLanguages.other]
     ];
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+        setValidationErrors({});
 
-        console.log('Registration submitted', {
-            email,
-            password,
-            confirmPassword,
-            name,
-            companyName,
-            selectedLanguages
-        });
+        try {
+            const registerData: RegisterRequest = {
+                email,
+                password,
+                name,
+                companyName,
+                programmingLanguages: selectedLanguages
+            };
+
+            const response = await authService.register(registerData);
+
+            localStorage.setItem('token', response.token);
+
+            navigate('/');
+        } catch (err: any) {
+            console.log('Error response:', err);
+
+            if (err.errors) {
+                setValidationErrors(err.errors);
+            } else if (err.type === 'error' && err.key) {
+                setError(err.key);
+            } else {
+                setError('generic');
+            }
+        }
     };
 
     const toggleLanguage = (language: string) => {
@@ -42,6 +66,11 @@ const RegisterForm: React.FC = () => {
 
     return (
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                    {t(`register.errors.${error}`)}
+                </div>
+            )}
             <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                     {t('register.name')}
@@ -79,6 +108,11 @@ const RegisterForm: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                 />
+                {validationErrors.email && (
+                    <p className="mt-1 text-sm text-red-600">
+                        {t(`register.errors.${validationErrors.email}`)}
+                    </p>
+                )}
             </div>
             <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -96,7 +130,7 @@ const RegisterForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pl-3 pr-3 flex items-center mt-1 text-gray-600 hover:text-gray-800"
+                        className="absolute inset-y-0 right-0 pl-3 pr-3 flex items-center text-gray-600 hover:text-gray-800"
                     >
                         {showPassword ? (
                             <EyeOff className="h-5 w-5"/>
@@ -105,6 +139,11 @@ const RegisterForm: React.FC = () => {
                         )}
                     </button>
                 </div>
+                {validationErrors.password && (
+                    <p className="mt-1 text-sm text-red-600">
+                        {t(`register.errors.${validationErrors.password}`)}
+                    </p>
+                )}
             </div>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -1,33 +1,77 @@
 import axios from 'axios';
-import {RegisterRequest, AuthResponse} from "../types/auth";
+import {RegisterRequest, AuthResponse, LoginRequest} from "../types/auth";
+import {ValidationError, AuthError} from "../types/errors";
 
 const API_URL = 'http://localhost:8080/api/auth';
+
+const axiosInstance = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+
+axiosInstance.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+axiosInstance.interceptors.response.use(
+    response => response,
+    error => {
+        console.error('API Error:', error);
+        return Promise.reject(error);
+    }
+);
+const handleAuthError = (error: unknown) => {
+    if (axios.isAxiosError(error)) {
+        const responseData = error.response?.data;
+
+        if (responseData && typeof responseData === 'object') {
+            if ('password' in responseData || 'email' in responseData) {
+                throw new ValidationError(responseData);
+            }
+
+            if ('type' in responseData) {
+                throw new AuthError(responseData.type, responseData.key);
+            }
+        }
+    }
+    throw new AuthError('error', 'generic');
+};
 
 export const authService = {
     async register(userData: RegisterRequest): Promise<AuthResponse> {
         try {
-            const response = await axios.post<AuthResponse>(
-                `${API_URL}/register`,
-                userData
-            );
-            return response.data;
+            const {data} = await axiosInstance.post<AuthResponse>('/register', userData);
+            localStorage.setItem('token', data.token);
+            return data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                const responseData = error.response?.data;
-
-                if (responseData && typeof responseData === 'object' && 'password' in responseData) {
-                    // eslint-disable-next-line no-throw-literal
-                    throw {errors: responseData};
-                }
-
-                // Dla błędów runtime (typ ErrorResponse)
-                if (responseData && typeof responseData === 'object' && 'type' in responseData) {
-                    throw responseData;
-                }
-            }
-
-            // eslint-disable-next-line no-throw-literal
-            throw {type: 'error', key: 'generic'};
+            throw handleAuthError(error);
         }
+    },
+
+    async login(userData: LoginRequest): Promise<AuthResponse> {
+        try {
+            const {data} = await axiosInstance.post<AuthResponse>('/login', userData);
+            localStorage.setItem('token', data.token);
+            return data;
+        } catch (error) {
+            throw handleAuthError(error)
+        }
+    },
+
+    logout() {
+        localStorage.removeItem('token');
+    },
+
+    isAuthenticated(): boolean {
+        return !!localStorage.getItem('token');
+    },
+
+    getToken(): string | null {
+        return localStorage.getItem('token');
     }
 };

@@ -1,5 +1,6 @@
-package org.noisevisionproductions.portfolio.exceptions;
+package org.noisevisionproductions.portfolio.auth.exceptions;
 
+import org.noisevisionproductions.portfolio.exceptions.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -7,16 +8,23 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class AuthExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException exception) {
         String errorKey = mapErrorMessageToKey(exception.getMessage());
         ErrorResponse errorResponse = new ErrorResponse("error", errorKey);
+
+        if (errorKey.equals("invalidCredentials")) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(errorResponse);
+        }
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errorResponse);
@@ -37,12 +45,25 @@ public class GlobalExceptionHandler {
                 .body(errors);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException authenticationException) {
+        ErrorResponse errorResponse = new ErrorResponse("error", "invalidCredentials");
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentialsException(InvalidCredentialsException invalidCredentialsException) {
+        ErrorResponse errorResponse = new ErrorResponse("error", "invalidCredentials");
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(errorResponse);
+    }
+
     private String mapErrorMessageToKey(String message) {
         if (message == null) return "generic";
 
-        System.out.println("Error message to map: " + message);
-
-        // Konwertujemy do małych liter dla uniknięcia problemów z wielkością znaków
         String lowerCaseMessage = message.toLowerCase();
 
         if (lowerCaseMessage.contains("registration is blocked")) {
@@ -51,7 +72,11 @@ public class GlobalExceptionHandler {
         if (lowerCaseMessage.contains("email already exists")) {
             return "emailExists";
         }
-
+        if (lowerCaseMessage.contains("invalid credentials") ||
+                lowerCaseMessage.contains("bad credentials") ||
+                lowerCaseMessage.contains("user not found")) {
+            return "invalidCredentials";
+        }
         return "generic";
     }
 }

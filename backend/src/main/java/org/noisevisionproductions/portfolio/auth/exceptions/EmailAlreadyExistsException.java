@@ -1,4 +1,4 @@
-package org.noisevisionproductions.portfolio.exceptions;
+package org.noisevisionproductions.portfolio.auth.exceptions;
 
 public class EmailAlreadyExistsException extends RuntimeException {
     public EmailAlreadyExistsException() {

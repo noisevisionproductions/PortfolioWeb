@@ -1,6 +1,6 @@
 package org.noisevisionproductions.portfolio.auth.service;
 
-import org.noisevisionproductions.portfolio.exceptions.RegistrationBlockedException;
+import org.noisevisionproductions.portfolio.auth.exceptions.RegistrationBlockedException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

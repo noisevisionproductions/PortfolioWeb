@@ -1,23 +1,27 @@
 import React, {useState} from "react";
 import {Header} from "../Header";
 import {useLanguage} from "../../../utils/translations/LanguageContext";
-import {Eye, EyeOff} from "lucide-react";
 import programmingLanguages from '../../../assets/programmingLanguages.json'
 import {authService} from "../../../services/authService";
-import {RegisterRequest} from "../../../types/auth";
 import {useNavigate} from "react-router-dom";
+import {FormInput} from "./FormInput";
+import {LanguageSelector} from "./ProgrammingLanguageSelector";
+import {SuccessAlert} from "./SuccessAlert";
+import {AuthError, ValidationError} from "../../../types/errors";
 
 const RegisterForm: React.FC = () => {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [name, setName] = useState('');
-    const [companyName, setCompanyName] = useState('');
-    const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-    const [error, setError] = useState<string>('');
-    const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
     const {t, currentLanguage} = useLanguage();
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        name: '',
+        companyName: '',
+        programmingLanguages: [] as string[]
+    });
+    const [error, setError] = useState<string>('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
     const allLanguages = [
         ...programmingLanguages.languages,
@@ -30,25 +34,12 @@ const RegisterForm: React.FC = () => {
         setValidationErrors({});
 
         try {
-            const registerData: RegisterRequest = {
-                email,
-                password,
-                name,
-                companyName,
-                programmingLanguages: selectedLanguages
-            };
-
-            const response = await authService.register(registerData);
-
-            localStorage.setItem('token', response.token);
-
-            navigate('/');
-        } catch (err: any) {
-            console.log('Error response:', err);
-
-            if (err.errors) {
+            await authService.register(formData);
+            setShowSuccessAlert(true);
+        } catch (err) {
+            if (err instanceof ValidationError) {
                 setValidationErrors(err.errors);
-            } else if (err.type === 'error' && err.key) {
+            } else if (err instanceof AuthError) {
                 setError(err.key);
             } else {
                 setError('generic');
@@ -56,125 +47,84 @@ const RegisterForm: React.FC = () => {
         }
     };
 
-    const toggleLanguage = (language: string) => {
-        setSelectedLanguages(prev =>
-            prev.includes(language)
-                ? prev.filter(lang => lang !== language)
-                : [...prev, language]
-        );
+    const handleSuccessAlertClose = () => {
+        setShowSuccessAlert(false);
+        navigate('/');
+    }
+
+    const handleInputChange = (field: string) => (value: string) => {
+        setFormData(prev => ({...prev, [field]: value}));
     };
 
     return (
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-                    {t(`register.errors.${error}`)}
-                </div>
-            )}
-            <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    {t('register.name')}
-                </label>
-                <input
+        <>
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                        {t(`register.errors.${error}`)}
+                    </div>
+                )}
+
+                <FormInput
                     id="name"
-                    type="text"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    label={t('register.name')}
+                    value={formData.name}
+                    onChange={handleInputChange('name')}
                 />
-            </div>
-            <div>
-                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
-                    {t('register.companyName')}
-                </label>
-                <input
+
+                <FormInput
                     id="companyName"
-                    type="text"
-                    aria-multiline={"false"}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    label={t('register.companyName')}
+                    value={formData.companyName}
+                    onChange={handleInputChange('companyName')}
                 />
-            </div>
-            <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    {t('register.email')}
-                </label>
-                <input
+
+                <FormInput
                     id="email"
                     type="email"
+                    label={t('register.email')}
+                    value={formData.email}
+                    onChange={handleInputChange('email')}
                     required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    error={validationErrors.email}
+                    translateError={(key) => t(`register.errors.${key}`)}
                 />
-                {validationErrors.email && (
-                    <p className="mt-1 text-sm text-red-600">
-                        {t(`register.errors.${validationErrors.email}`)}
-                    </p>
-                )}
-            </div>
-            <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    {t('register.password')}
-                </label>
-                <div className="relative">
-                    <input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+
+                <FormInput
+                    id="password"
+                    type="password"
+                    label={t('register.password')}
+                    value={formData.password}
+                    onChange={handleInputChange('password')}
+                    required
+                    error={validationErrors.password}
+                    translateError={(key) => t(`register.errors.${key}`)}
+                />
+
+                <LanguageSelector
+                    label={t('register.programmingLanguages')}
+                    options={allLanguages}
+                    selected={formData.programmingLanguages}
+                    onChange={(selected) => setFormData(prev => ({...prev, selectedLanguages: selected}))}
+                />
+
+                <div>
                     <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pl-3 pr-3 flex items-center text-gray-600 hover:text-gray-800"
+                        type="submit"
+                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                        {showPassword ? (
-                            <EyeOff className="h-5 w-5"/>
-                        ) : (
-                            <Eye className="h-5 w-5"/>
-                        )}
+                        {t('register.submit')}
                     </button>
                 </div>
-                {validationErrors.password && (
-                    <p className="mt-1 text-sm text-red-600">
-                        {t(`register.errors.${validationErrors.password}`)}
-                    </p>
-                )}
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('register.programmingLanguages')}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                    {allLanguages.map((language) => (
-                        <button
-                            key={language}
-                            type="button"
-                            onClick={() => toggleLanguage(language)}
-                            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                                selectedLanguages.includes(language)
-                                    ? 'bg-primary text-white'
-                                    : 'bg-primary/10 text-primary hover:bg-primary/20'
-                            }`}
-                        >
-                            {language}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            <div>
-                <button
-                    type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                    {t('register.submit')}
-                </button>
-            </div>
-        </form>
+            </form>
+
+            <SuccessAlert
+                isOpen={showSuccessAlert}
+                onClose={handleSuccessAlertClose}
+                title={t('register.success.title')}
+                description={t('register.success.description')}
+            />
+        </>
     );
 };
 

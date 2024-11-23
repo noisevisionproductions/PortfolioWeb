@@ -6,14 +6,13 @@ import {ProjectSection} from "./components/landingPage/ProjectSection";
 import {ContactSection} from "./components/landingPage/ContactSection";
 import {useProjects} from './hooks/useProjects';
 import {LoginPage} from "./components/landingPage/auth/LoginPage";
-import {BrowserRouter, Route, Routes, useNavigate} from "react-router-dom";
+import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {RegisterPage} from "./components/landingPage/auth/RegisterPage";
 
 function MainContent() {
     const {t} = useLanguage();
     const {projects, isLoading, error} = useProjects();
     const [, setShowTimeoutError] = useState(false);
-    const navigate = useNavigate();
 
     useEffect(() => {
         let timer: string | number | NodeJS.Timeout | undefined;
@@ -25,10 +24,6 @@ function MainContent() {
         return () => clearTimeout(timer);
     }, [isLoading]);
 
-    const handleLogin = () => {
-        navigate('/login')
-    };
-
     return (
         <div className="min-h-screen bg-gray-100">
             <Header
@@ -39,7 +34,6 @@ function MainContent() {
                     contact: t('header.navigation.contact'),
                     login: t('header.navigation.login')
                 }}
-                onLoginClick={handleLogin}
             />
             <main className="pt-16">
                 <HeroSection

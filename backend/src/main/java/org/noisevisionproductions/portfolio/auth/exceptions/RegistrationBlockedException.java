@@ -1,4 +1,4 @@
-package org.noisevisionproductions.portfolio.exceptions;
+package org.noisevisionproductions.portfolio.auth.exceptions;
 
 import lombok.Getter;
 

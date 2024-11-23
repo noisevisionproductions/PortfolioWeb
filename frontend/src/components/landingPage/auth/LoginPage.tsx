@@ -1,70 +1,99 @@
 import React, {useState} from 'react';
 import {Header} from '../Header'
 import {useLanguage} from "../../../utils/translations/LanguageContext";
-import {Link} from 'react-router-dom';
-import {Eye, EyeOff} from "lucide-react";
+import {Link, useNavigate} from 'react-router-dom';
+import {authService} from "../../../services/authService";
+import {ValidationError, AuthError} from "../../../types/errors";
+import {SuccessAlert} from "./SuccessAlert";
+import {FormInput} from "./FormInput";
 
 const LoginForm: React.FC = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
     const {t} = useLanguage();
+    const [formData, setFormData] = useState({
+        email: '',
+        password: ''
+    });
+    const [error, setError] = useState<string>('');
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setError('');
+        setValidationErrors({});
 
-        console.log('Login submitted', {email, password});
+        try {
+            await authService.login(formData);
+            setShowSuccessAlert(true);
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                setValidationErrors(err.errors);
+            } else if (err instanceof AuthError) {
+                setError(err.key);
+            } else {
+                setError('generic');
+            }
+        }
+    };
+
+    const handleSuccessAlertClose = () => {
+        setShowSuccessAlert(false);
+        navigate('/');
+    };
+
+    const handleInputChange = (field: string) => (value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
     };
 
     return (
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    {t('login.email')}
-                </label>
-                <input
+        <>
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+                        {t(`login.errors.${error}`)}
+                    </div>
+                )}
+
+                <FormInput
                     id="email"
                     type="email"
+                    label={t('login.email')}
+                    value={formData.email}
+                    onChange={handleInputChange('email')}
                     required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    error={validationErrors.email}
+                    translateError={(key) => t(`login.errors.${key}`)}
                 />
-            </div>
-            <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    {t('login.password')}
-                </label>
-                <div className="relative">
-                    <input
-                        id="password"
-                        type="password"
-                        required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+
+                <FormInput
+                    id="password"
+                    type="password"
+                    label={t('login.password')}
+                    value={formData.password}
+                    onChange={handleInputChange('password')}
+                    required
+                    error={validationErrors.password}
+                    translateError={(key) => t(`login.errors.${key}`)}
+                />
+
+                <div>
                     <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pl-3 pr-3 flex items-center mt-1 text-gray-600 hover:text-gray-800"
-                    >
-                        {showPassword ? (
-                            <EyeOff className="h-5 w-5"/>
-                        ) : (
-                            <Eye className="h-5 w-5"/>
-                        )}
+                        type="submit"
+                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:ouline-none foucs:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {t('login.submit')}
                     </button>
                 </div>
-            </div>
-            <div>
-                <button
-                    type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:ouline-none foucs:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    {t('login.submit')}
-                </button>
-            </div>
-        </form>
+            </form>
+
+            <SuccessAlert isOpen={showSuccessAlert}
+                          onClose={handleSuccessAlertClose}
+                          title={t('login.success.title')}
+                          description={t('login.success.description')}/>
+        </>
     );
 };
 
@@ -85,7 +114,10 @@ export const LoginPage: React.FC = () => {
                 <div className="mt-6 text-center">
                     <p className="text-sm text-gray-600">
                         {t('login.noAccount')}{' '}
-                        <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+                        <Link
+                            to="/register"
+                            className="font-medium text-indigo-600 hover:text-indigo-500"
+                        >
                             {t('login.register')}
                         </Link>
                     </p>

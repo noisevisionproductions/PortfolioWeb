@@ -1,6 +1,9 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {useNavigate} from "react-router-dom";
 import {LanguageSwitch} from '../LanguageSwitch'
+import {useLanguage} from "../../utils/translations/LanguageContext";
+import {authService} from "../../services/authService";
+import {SuccessAlert} from "./auth/SuccessAlert";
 
 interface HeaderProps {
     title: string;
@@ -9,12 +12,15 @@ interface HeaderProps {
         projects?: string;
         contact?: string;
         login: string;
-    };
-    onLoginClick?: () => void;
+        logout?: string;
+    }
 }
 
-export const Header: React.FC<HeaderProps> = ({title, navigation, onLoginClick}) => {
+export const Header: React.FC<HeaderProps> = ({title, navigation}) => {
     const navigate = useNavigate();
+    const {t} = useLanguage();
+    const isAuthenticated = authService.isAuthenticated();
+    const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
     const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
         e.preventDefault()
@@ -30,40 +36,55 @@ export const Header: React.FC<HeaderProps> = ({title, navigation, onLoginClick})
         }
     };
 
-    const handleLoginClick = () => {
-        if (onLoginClick) {
-            onLoginClick();
+    const handleAuthAction = () => {
+        if (isAuthenticated) {
+            authService.logout();
+            setShowLogoutAlert(true);
         } else {
-            navigate('/login');
+            navigate("/login");
         }
     }
 
+    const handleLogoutAlertClose = () => {
+        setShowLogoutAlert(false);
+        navigate('/');
+    }
+
     return (
-        <header className={"bg-white shadow fixed top-0 right-0 w-full z-50"}>
-            <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-16 items-center">
-                    <div
-                        onClick={() => navigate('/')}
-                        className="text-xl font-bold cursor-pointer hover:text-gray-700"
-                    >
-                        {title}
+        <>
+            <header className={"bg-white shadow fixed top-0 right-0 w-full z-50"}>
+                <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="container mx-auto">
+                        <div className="flex justify-between h-16 items-center">
+                            <div
+                                onClick={() => navigate('/')}
+                                className="text-xl font-bold cursor-pointer hover:text-gray-700"
+                            >
+                                {title}
+                            </div>
+                            <div className="flex space-x-4">
+                                <a href="#about" onClick={(e) => scrollToSection(e, 'about')}
+                                   className="text-gray-700 hover:text-gray-900">{navigation.about}</a>
+                                <a href="#projects" onClick={(e) => scrollToSection(e, 'projects')}
+                                   className="text-gray-700 hover:text-gray-900">{navigation.projects}</a>
+                                <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}
+                                   className="text-gray-700 hover:text-gray-900">{navigation.contact}</a>
+                                <button
+                                    onClick={handleAuthAction}
+                                    className="text-gray-700 hover:text-gray-900">
+                                    {isAuthenticated ? (navigation.logout || t('header.navigation.logout')) : navigation.login}
+                                </button>
+                                <LanguageSwitch/>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex space-x-4">
-                        <a href="#about" onClick={(e) => scrollToSection(e, 'about')}
-                           className="text-gray-700 hover:text-gray-900">{navigation.about}</a>
-                        <a href="#projects" onClick={(e) => scrollToSection(e, 'projects')}
-                           className="text-gray-700 hover:text-gray-900">{navigation.projects}</a>
-                        <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}
-                           className="text-gray-700 hover:text-gray-900">{navigation.contact}</a>
-                        <button
-                            onClick={handleLoginClick}
-                            className="text-gray-700 hover:text-gray-900">
-                            {navigation.login}
-                        </button>
-                        <LanguageSwitch/>
-                    </div>
-                </div>
-            </nav>
-        </header>
+                </nav>
+            </header>
+            <SuccessAlert isOpen={showLogoutAlert}
+                          onClose={handleLogoutAlertClose}
+                          title={t('logout.success.title')}
+                          description={t('logout.success.description')}
+            />
+        </>
     );
 };

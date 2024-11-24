@@ -33,7 +33,6 @@ public class JwtService {
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
--*
 
     public String extractUsername(String token) {
         try {

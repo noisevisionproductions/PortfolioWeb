@@ -1,13 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {Header} from "./components/landingPage/Header";
+import {Header} from "./components/shared/Header";
 import {useLanguage} from "./utils/translations/LanguageContext";
 import {HeroSection} from "./components/landingPage/HeroSection";
 import {ProjectSection} from "./components/landingPage/ProjectSection";
 import {ContactSection} from "./components/landingPage/ContactSection";
 import {useProjects} from './hooks/useProjects';
-import {LoginPage} from "./components/landingPage/auth/LoginPage";
+import {LoginPage} from "./components/auth/LoginPage";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
-import {RegisterPage} from "./components/landingPage/auth/RegisterPage";
+import {RegisterPage} from "./components/auth/RegisterPage";
+import ProjectFormPage from "./components/projectCreate/ProjectFormPage";
+import {ProjectDetailsPage} from "./components/projectDetails/ProjectDetailsPage";
 
 function MainContent() {
     const {t} = useLanguage();
@@ -29,7 +31,7 @@ function MainContent() {
             <Header
                 title={t('header.title')}
                 navigation={{
-                    about: t('header.navigation.about'),
+                    addProject: t('header.navigation.addProject'),
                     projects: t('header.navigation.projects'),
                     contact: t('header.navigation.contact'),
                     login: t('header.navigation.login')
@@ -76,6 +78,9 @@ function App() {
                 <Route path="/" element={<MainContent/>}/>
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route path="/register" element={<RegisterPage/>}/>
+                <Route path="/add-project" element={<ProjectFormPage/>}/>
+                <Route path="/project/:slug" element={<ProjectDetailsPage/>}/>
+                <Route path="/edit-project/:id" element={<ProjectFormPage/>}/>
             </Routes>
         </BrowserRouter>
     )

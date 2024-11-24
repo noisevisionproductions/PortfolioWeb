@@ -1,9 +1,15 @@
 export const translations = {
     pl: {
+        common: {
+            cancel: "Anuluj",
+            remove: "Usuń",
+            errorWhileLoading: "Błąd podczas ładowania",
+            backToHome: "Wróć do strony głównej"
+        },
         header: {
             title: "Moje Portfolio",
             navigation: {
-                about: "O mnie",
+                addProject: "Dodaj projekt",
                 projects: "Projekty",
                 contact: "Kontakt",
                 login: "Zaloguj się",
@@ -68,13 +74,67 @@ export const translations = {
             contact: "Kontakt",
             message: "Wiadomość",
             submit: "Wyślij"
+        },
+        projectForm: {
+            createTitle: "Dodaj nowy projekt",
+            editTitle: "Edytuj projekt",
+            projectName: "Nazwa projektu",
+            description: "Opis projektu",
+            repositoryUrl: "Link do repozytorium",
+            status: "Status projektu",
+            statuses: {
+                inProgress: "W trakcie rozwoju",
+                completed: "Zakończony",
+                archived: "Zarchiwizowany"
+            },
+            startDate: "Data rozpoczęcia",
+            endDate: "Data zakończenia",
+            features: "Funkcje",
+            addFeature: "Dodaj funkcjonalność",
+            contributors: "Współtwórcy",
+            contributor: "Współtwórca",
+            contributorName: "Imię/Nickname",
+            contributorRole: "Rola",
+            contributorProfileUrl: "Profil",
+            addContributor: "Dodaj współtwórcę",
+            technologies: "Technologie",
+            caption: "Opis",
+            addImage: "Dodaj obrazy",
+            saveProject: "Zapisz projekt",
+            updateProject: "Zaktualizuj projekt",
+            createCaption: "Dodaj opis do obrazu...",
+            saveImage: "Zapisz obraz",
+            fetchError: "Nie udało się pobrać danych projektu"
+        },
+        projectDetails: {
+            confirmDelete: "Czy na pewno chcesz usunąć ten projekt?",
+            deleteError: "Nie udało się usunąć projektu",
+            error: "Wystąpił nieoczekiwany błąd",
+            backToMainMenu: "Wróć do strony głównej",
+            back: "Wróć",
+            edit: "Edytuj",
+            delete: "Usuń",
+            startDate: "Data rozpoczęcia",
+            endDate: "Data zakończenia",
+            viewRepository: "Repozytorium",
+            features: "Funkcje",
+            contributors: "Współtwórcy",
+            viewProfile: "Zobacz profil",
+            confirmImageDelete: "Czy na pewno chcesz usunąć ten obraz?",
+            deleteImageError: "Błąd podczas usuwania obrazu"
         }
     },
     en: {
+        common: {
+            cancel: "Cancel",
+            remove: "Delete",
+            errorWhileLoading: "Error while loading",
+            backToHome: "Back to main page"
+        },
         header: {
             title: "My Portfolio",
             navigation: {
-                about: "About",
+                addProject: "Add project",
                 projects: "Projects",
                 contact: "Contact",
                 login: "Log in",
@@ -141,6 +201,54 @@ export const translations = {
             contact: "Contact",
             message: "Message",
             submit: "Submit"
+        },
+        projectForm: {
+            createTitle: "Add new project",
+            editTitle: "Edit project",
+            projectName: "Project name",
+            description: "Project description",
+            repositoryUrl: "Repository link",
+            status: "Project status",
+            statuses: {
+                inProgress: "In progress",
+                completed: "Completed",
+                archived: "Archived"
+            },
+            startDate: "Start date",
+            endDate: "End date",
+            features: "Features",
+            contributors: "Contributors",
+            contributor: "Contributor",
+            contributorName: "Name/Nickname",
+            contributorRole: "Role",
+            contributorProfileUrl: "Profile",
+            addContributor: "Add contributor",
+            addFeature: "Add a feature",
+            technologies: "Technologies",
+            caption: "Caption",
+            addImage: "Add images",
+            saveProject: "Save project",
+            updateProject: "Update project",
+            createCaption: "Add caption for image...",
+            saveImage: "Save image",
+            fetchError: "Failed to get project data"
+        },
+        projectDetails: {
+            confirmDelete: "Are you sure you want to delete this project?",
+            deleteError: "Failed to delete project",
+            error: "An unexpected error occurred",
+            backToMainMenu: "Back to main page",
+            back: "Back",
+            edit: "Edit",
+            delete: "Delete",
+            startDate: "Start date",
+            endDate: "End date",
+            viewRepository: "Repository",
+            features: "Features",
+            contributors: "Contributors",
+            viewProfile: "View profile",
+            confirmImageDelete: "Are you sure you want to delete this image?",
+            deleteImageError: "Error occurred while deleting image"
         }
     }
 };

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {useLanguage} from '../../../utils/translations/LanguageContext';
+import {useTranslation} from "react-i18next";
 import {Header} from '../../../components/shared/Header';
 import {ActionButton} from '../../../components/shared/ActionButton';
 import {Project, ProjectImage, ProjectStatus} from '../../types/project';
@@ -10,10 +10,12 @@ import {ImageList} from './ImageList';
 import programmingLanguages from '../../../assets/programmingLanguages.json';
 import {LoadingSpinner} from "../../../components/shared/LoadingSpinner";
 import {useBaseProject, useProjectImage, useProjectContributor, useProjectFeature} from "../../context";
+import {useLanguageSwitch} from "../../../utils/translations/LanguageContext";
 
 const ProjectFormPage = () => {
-    const {t, currentLanguage} = useLanguage();
+    const {t} = useTranslation();
     const navigate = useNavigate();
+    const {currentLanguage} = useLanguageSwitch();
     const {id: idParam} = useParams<{ id: string }>();
     const id = idParam ? parseInt(idParam, 10) : undefined;
     const isEditMode = Boolean(id);
@@ -32,7 +34,7 @@ const ProjectFormPage = () => {
 
     const availableTechnologies = [
         ...programmingLanguages.languages,
-        programmingLanguages.other[currentLanguage as keyof typeof programmingLanguages.other]
+        programmingLanguages.other[currentLanguage]
     ];
 
     const [project, setProject] = useState<Project>({

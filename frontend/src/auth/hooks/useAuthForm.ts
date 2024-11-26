@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react";
-import {useAuthContext} from "./useAuthContext";
+import {useBaseAuthContext} from "./useBaseAuthContext";
 import {ValidationError, AuthError} from "../types/errors";
 
 interface UseAuthFormProps<T> {
@@ -13,7 +13,7 @@ export const useAuthForm = <T extends Record<string, any>>({
                                                                initialData,
                                                                onSuccess
                                                            }: UseAuthFormProps<T>) => {
-    const {clearError, error: contextError, loading} = useAuthContext();
+    const {clearError, error: contextError, loading} = useBaseAuthContext();
     const [formData, setFormData] = useState<T>(initialData);
     const [error, setError] = useState<string>('');
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});

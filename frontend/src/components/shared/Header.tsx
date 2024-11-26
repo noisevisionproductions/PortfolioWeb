@@ -1,9 +1,11 @@
 import React, {useState} from 'react';
 import {useNavigate} from "react-router-dom";
 import {LanguageSwitch} from './LanguageSwitch'
-import {useLanguage} from "../../utils/translations/LanguageContext";
-import {authService} from "../../auth/services/authService";
+import {useTranslation} from "react-i18next";
+import {baseAuthService} from "../../auth/services/baseAuthService";
 import {SuccessAlert} from "../../auth/components/SuccessAlert";
+import {useBaseAuthContext} from "../../auth/hooks/useBaseAuthContext";
+import {Authority} from "../../auth/types/roles";
 
 interface HeaderProps {
     title: string;
@@ -18,9 +20,10 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({title, navigation}) => {
     const navigate = useNavigate();
-    const {t} = useLanguage();
-    const isAuthenticated = authService.isAuthenticated();
+    const {t} = useTranslation();
+    const isAuthenticated = baseAuthService.isAuthenticated();
     const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+    const {hasAuthority} = useBaseAuthContext();
 
     const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
         e.preventDefault()
@@ -38,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({title, navigation}) => {
 
     const handleAuthAction = () => {
         if (isAuthenticated) {
-            authService.logout();
+            baseAuthService.logout();
             setShowLogoutAlert(true);
         } else {
             navigate("/login");
@@ -63,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({title, navigation}) => {
                                 {title}
                             </div>
                             <div className="flex space-x-4">
-                                {isAuthenticated && navigation.addProject && (
+                                {hasAuthority(Authority.CREATE_PROJECTS) && navigation.addProject && (
                                     <button
                                         onClick={() => navigate('/add-project')}
                                         className="text-gray-700 hover:text-gray-900"

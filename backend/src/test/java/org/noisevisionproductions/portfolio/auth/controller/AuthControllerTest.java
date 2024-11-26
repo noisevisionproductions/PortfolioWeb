@@ -31,7 +31,7 @@ class AuthControllerTest {
     private Validator validator;
 
     @Mock
-    private AuthService authService;
+    private AuthService baseAuthService;
 
     @InjectMocks
     private AuthController authController;
@@ -54,7 +54,7 @@ class AuthControllerTest {
 
         AuthResponse expectedResponse = new AuthResponse("jwt-token", request.email());
 
-        when(authService.register(any(RegisterRequest.class)))
+        when(baseAuthService.register(any(RegisterRequest.class)))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<AuthResponse> response = authController.register(request);
@@ -64,7 +64,7 @@ class AuthControllerTest {
         assertThat(response.getBody().token()).isEqualTo(expectedResponse.token());
         assertThat(response.getBody().email()).isEqualTo(expectedResponse.email());
 
-        verify(authService, times(1)).register(request);
+        verify(baseAuthService, times(1)).register(request);
     }
 
     @Test

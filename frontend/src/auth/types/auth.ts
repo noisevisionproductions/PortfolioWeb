@@ -14,6 +14,8 @@ export interface LoginRequest {
 export interface AuthResponse {
     token: string;
     email: string;
+    role: string;
+    authorities: string[];
 }
 
 export interface User {
@@ -23,11 +25,4 @@ export interface User {
     name: string;
     companyName: string;
     programmingLanguages: string[];
-}
-
-export enum Authority {
-    CREATE_PROJECTS = 'CREATE_PROJECTS',
-    EDIT_PROJECTS = 'EDIT_PROJECTS',
-    DELETE_PROJECTS = 'DELETE_PROJECTS',
-    SEND_MESSAGES = 'SEND_MESSAGES'
 }

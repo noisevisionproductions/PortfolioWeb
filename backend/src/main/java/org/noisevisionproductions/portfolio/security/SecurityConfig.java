@@ -36,11 +36,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Dodane dla pre-flight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        .requestMatchers("/api/projects/**", "/api/files/**").permitAll()
+                        // Zezwól tylko na GET dla projektów
+                        .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers("/api/errors/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
+                        // Wszystkie inne operacje na projektach wymagają autoryzacji
+                        .requestMatchers("/api/projects/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(handling -> handling

@@ -1,5 +1,7 @@
 import React from 'react';
 import {ArrowLeft, Pencil, Trash2} from 'lucide-react';
+import {useBaseAuthContext} from "../../../auth/hooks/useBaseAuthContext";
+import {Authority} from "../../../auth/types/roles";
 
 interface ProjectHeaderProps {
     onBack: () => void;
@@ -14,7 +16,17 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                                                                 onDelete,
                                                                 t
                                                             }) => {
+    const {hasAuthority} = useBaseAuthContext();
+
+    const canEditProjects = hasAuthority(Authority.EDIT_PROJECTS);
+    const canDeleteProjects = hasAuthority(Authority.DELETE_PROJECTS);
+
     const renderManagementButtons = () => {
+        if (!canEditProjects && !canDeleteProjects) {
+            console.log('ProjectHeader - No permissions, not rendering buttons');
+            return null;
+        }
+
         return (
             <div className="flex gap-2">
                 <button

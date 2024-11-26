@@ -1,19 +1,21 @@
 import React from 'react';
-import {useAuthContext} from "../../hooks/useAuthContext";
+import {useBaseAuthContext} from "../../hooks/useBaseAuthContext";
 import {useAuthForm} from "../../hooks/useAuthForm";
 import {AuthPage} from "../AuthPage";
 import {AuthForm} from "../AuthForm";
 import {FormInput} from "../../../components/shared/FormInput";
 import {LanguageSelector} from './ProgrammingLanguageSelector';
 import programmingLanguages from '../../../assets/programmingLanguages.json';
-import {useLanguage} from "../../../utils/translations/LanguageContext";
+import {useTranslation} from "react-i18next";
 import {useNavigate} from "react-router-dom";
 import {RegisterRequest} from "../../types/auth";
+import {useLanguageSwitch} from "../../../utils/translations/LanguageContext";
 
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate()
-    const {t, currentLanguage} = useLanguage();
-    const {register} = useAuthContext();
+    const {t} = useTranslation();
+    const {currentLanguage} = useLanguageSwitch();
+    const {register} = useBaseAuthContext();
     const {
         formData,
         error,
@@ -37,7 +39,7 @@ export const RegisterPage: React.FC = () => {
 
     const allLanguages = [
         ...programmingLanguages.languages,
-        programmingLanguages.other[currentLanguage as keyof typeof programmingLanguages.other]
+        programmingLanguages.other[currentLanguage]
     ];
 
     return (

@@ -1,21 +1,22 @@
 import React, {useEffect, useState} from 'react';
 import {Header} from "./components/shared/Header";
-import {useLanguage} from "./utils/translations/LanguageContext";
+import {useTranslation} from "react-i18next";
 import {HeroSection} from "./components/landingPage/HeroSection";
 import {ProjectSection} from "./projects/components/projectSection/ProjectSection";
 import {ContactSection} from "./components/landingPage/ContactSection";
-import {LoginPage} from "./auth/components/login/LoginPage";
-import {BrowserRouter, Route, Routes, useNavigate} from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 import {RegisterPage} from "./auth/components/register/RegisterPage";
 import ProjectFormPage from "./projects/components/projectCreate/ProjectFormPage";
 import {ProjectDetailsPage} from "./projects/components/projectDetails/ProjectDetailsPage";
 import {ProjectProvider, useBaseProject} from "./projects/context";
 import {AuthProvider} from "./auth/context/BaseAuthContext";
 import {UnauthorizedPage} from "./components/UnauthorizedPage";
-import {setNavigationFunction} from "./auth/services/navigation";
+import {ProtectedRoute} from "./auth/components/ProtectedRoute";
+import {Authority} from "./auth/types/roles";
+import ProtectedLoginRoute from "./auth/components/login/ProtectedLoginRoute";
 
 function MainContent() {
-    const {t} = useLanguage();
+    const {t} = useTranslation();
     const {projects, loading: isLoading, error, fetchProjects} = useBaseProject();
     const [, setShowTimeoutError] = useState(false);
 
@@ -79,23 +80,28 @@ function MainContent() {
 }
 
 function App() {
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        setNavigationFunction((path: string) => navigate(path));
-    }, [navigate]);
-
     return (
         <AuthProvider>
             <ProjectProvider>
                 <Routes>
+                    {/* Publiczne ścieżki */}
                     <Route path="/" element={<MainContent/>}/>
-                    <Route path="/login" element={<LoginPage/>}/>
+                    <Route path="/login" element={<ProtectedLoginRoute/>}/>
                     <Route path="/register" element={<RegisterPage/>}/>
-                    <Route path="/add-project" element={<ProjectFormPage/>}/>
                     <Route path="/project/:slug" element={<ProjectDetailsPage/>}/>
-                    <Route path="/edit-project/:id" element={<ProjectFormPage/>}/>
                     <Route path="/unauthorized" element={<UnauthorizedPage/>}/>
+
+                    {/* Ścieżki wymagająca konkretnych uprawnień */}
+                    <Route path="/add-project" element={
+                        <ProtectedRoute requiredAuthorities={[Authority.CREATE_PROJECTS]}>
+                            <ProjectFormPage/>
+                        </ProtectedRoute>
+                    }/>
+                    <Route path="/edit-project/:id" element={
+                        <ProtectedRoute requiredAuthorities={[Authority.EDIT_PROJECTS]}>
+                            <ProjectFormPage/>
+                        </ProtectedRoute>
+                    }/>
                 </Routes>
             </ProjectProvider>
         </AuthProvider>

@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import {Image as ImageIcon, ChevronLeft, ChevronRight, X} from "lucide-react";
 import {ImageViewerImage} from "../../projects/types/images";
-import {useLanguage} from "../../utils/translations/LanguageContext";
+import {useTranslation} from "react-i18next";
 
 interface ImageViewerProps {
     images: ImageViewerImage[];
@@ -20,7 +20,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
                                                             aspectRatio = 'video',
                                                             showImageCount = true,
                                                         }) => {
-    const {t} = useLanguage();
+    const {t} = useTranslation();
     const [imageError, setImageError] = useState<boolean>(false);
     const [currentImageIndex, setCurrentImageIndex] = useState<number>(initialIndex);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);

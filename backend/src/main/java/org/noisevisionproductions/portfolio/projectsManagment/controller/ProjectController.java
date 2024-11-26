@@ -7,12 +7,10 @@ import org.noisevisionproductions.portfolio.projectsManagment.dto.ProjectDTO;
 import org.noisevisionproductions.portfolio.projectsManagment.dto.ProjectImageDTO;
 import org.noisevisionproductions.portfolio.projectsManagment.model.ImageFromProject;
 import org.noisevisionproductions.portfolio.projectsManagment.model.Project;
-import org.noisevisionproductions.portfolio.projectsManagment.model.ProjectStatus;
 import org.noisevisionproductions.portfolio.projectsManagment.service.FileStorageService;
 import org.noisevisionproductions.portfolio.projectsManagment.service.ProjectService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 

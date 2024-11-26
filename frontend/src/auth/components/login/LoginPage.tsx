@@ -1,16 +1,27 @@
 import React from 'react';
 import {Link, useNavigate} from 'react-router-dom';
-import {useAuthContext} from "../../hooks/useAuthContext";
+import {useBaseAuthContext} from "../../hooks/useBaseAuthContext";
 import {useAuthForm} from "../../hooks/useAuthForm";
 import {AuthPage} from "../AuthPage";
 import {AuthForm} from "../AuthForm";
 import {FormInput} from "../../../components/shared/FormInput";
-import {useLanguage} from "../../../utils/translations/LanguageContext";
+import {useTranslation} from "react-i18next";
 
-export const LoginPage: React.FC = () => {
-    const {t} = useLanguage();
+interface LoginPageProps {
+    onLoginAttempt?: () => void;
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({onLoginAttempt}) => {
+    const {t} = useTranslation();
     const navigate = useNavigate();
-    const {login} = useAuthContext();
+    const {login} = useBaseAuthContext();
+
+    const handleLogin = async (data: any) => {
+        if (onLoginAttempt) {
+            onLoginAttempt();
+        }
+        return login(data);
+    };
     const {
         formData,
         error,
@@ -21,7 +32,7 @@ export const LoginPage: React.FC = () => {
         handleInputChange,
         handleSuccessAlertClose
     } = useAuthForm({
-        onSubmit: async (data) => await login(data.email, data.password),
+        onSubmit: handleLogin,
         initialData: {email: '', password: ''},
         onSuccess: () => navigate('/')
     });

@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Setter
 @Getter
@@ -41,7 +42,17 @@ public class UserModel implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
+
+        authorities.addAll(
+                role.getAuthorities().stream()
+                        .map(auth -> new SimpleGrantedAuthority(auth.name()))
+                        .collect(Collectors.toSet())
+        );
+
+        return authorities;
     }
 
     @Override

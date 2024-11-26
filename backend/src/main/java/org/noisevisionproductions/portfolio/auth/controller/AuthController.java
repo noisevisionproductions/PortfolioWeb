@@ -20,16 +20,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
-    private final AuthService authService;
+    private final AuthService baseAuthService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        return ResponseEntity.ok(authService.register(registerRequest));
+        return ResponseEntity.ok(baseAuthService.register(registerRequest));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-        return ResponseEntity.ok(authService.login(loginRequest));
+        return ResponseEntity.ok(baseAuthService.login(loginRequest));
     }
 
     @GetMapping("/me")
@@ -38,6 +38,6 @@ public class AuthController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.ok(authService.getCurrentUserInfo(user.getEmail()));
+        return ResponseEntity.ok(baseAuthService.getCurrentUserInfo(user.getEmail()));
     }
 }

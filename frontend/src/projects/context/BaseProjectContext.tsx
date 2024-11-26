@@ -1,6 +1,6 @@
 import React, {createContext, useState, useCallback} from "react";
 import {Project, ProjectDTO} from '../types/project';
-import {baseService} from '../services';
+import {baseProjectService} from '../services';
 import {ApiError} from "../../auth/types/errors";
 
 export interface BaseProjectContextType {
@@ -27,7 +27,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
     const fetchProjects = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await baseService.getAllProjects();
+            const data = await baseProjectService.getAllProjects();
             setProjects(data);
             setError(null);
         } catch (err) {
@@ -41,7 +41,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
     const getProject = useCallback(async (id: number) => {
         setLoading(true);
         try {
-            const project = await baseService.getProject(id);
+            const project = await baseProjectService.getProject(id);
             setSelectedProject(project);
             setError(null);
             return project;
@@ -57,7 +57,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
     const getProjectBySlug = useCallback(async (slug: string) => {
         setLoading(true);
         try {
-            const project = await baseService.getProjectBySlug(slug);
+            const project = await baseProjectService.getProjectBySlug(slug);
             setSelectedProject(project);
             setError(null);
             return project;
@@ -73,7 +73,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
     const createProject = useCallback(async (projectData: ProjectDTO) => {
         setLoading(true);
         try {
-            const newProject = await baseService.createProject(projectData);
+            const newProject = await baseProjectService.createProject(projectData);
             setProjects(prev => [...prev, newProject]);
             setError(null);
             return newProject;
@@ -89,7 +89,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
     const updateProject = useCallback(async (id: number, projectData: ProjectDTO) => {
         setLoading(true);
         try {
-            const updatedProject = await baseService.updateProject(id, projectData);
+            const updatedProject = await baseProjectService.updateProject(id, projectData);
             setProjects(prev => prev.map(p => p.id === id ? updatedProject : p));
             if (selectedProject?.id === id) {
                 setSelectedProject(updatedProject);
@@ -108,7 +108,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
     const deleteProject = useCallback(async (id: number) => {
         setLoading(true);
         try {
-            await baseService.deleteProject(id);
+            await baseProjectService.deleteProject(id);
             setProjects(prev => prev.filter(p => p.id !== id));
             if (selectedProject?.id === id) {
                 setSelectedProject(null);
@@ -118,7 +118,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
             if (error instanceof ApiError) {
                 setError(error.message);
             } else {
-                setError('Wystąpił nieoczekiwany błąd');
+                setError('Wystąpił podczas usuwania projektu');
             }
         } finally {
             setLoading(false);

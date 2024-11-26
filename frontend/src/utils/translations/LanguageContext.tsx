@@ -1,40 +1,39 @@
-import React, {createContext, useState, useContext} from 'react';
-import {Language, translations} from "./translations";
+import React, {createContext, useContext} from 'react';
+import {Language} from "./translations";
+import {useTranslation} from "react-i18next";
 
 const LanguageContext = createContext<{
     language: Language;
     currentLanguage: Language;
-    setLanguage: (lang: Language) => void;
-    t: (key: string) => string;
+    switchLanguage: (lang: Language) => Promise<void>;
 }>({
     language: 'pl',
     currentLanguage: 'pl',
-    setLanguage: () => {
+    switchLanguage: async () => {
     },
-    t: () => ''
 });
 
 export const LanguageProvider = ({children}: { children: React.ReactNode }) => {
-    const [language, setLanguage] = useState<Language>('pl');
+    const {i18n} = useTranslation();
 
-    const t = (path: string): string => {
-        return path.split('.').reduce((obj: any, key: string) => {
-            if (obj && typeof obj === 'object' && key in obj) {
-                return obj[key];
-            }
-            console.warn(`Translation missing for key: ${path}, at segment: ${key}`);
-            return path;
-        }, translations[language]);
-
+    const switchLanguage = async (lang: Language) => {
+        try {
+            await i18n.changeLanguage(lang);
+            localStorage.setItem('language', lang);
+        } catch (error) {
+            console.error('Error changing language:', error);
+        }
     };
 
-    const currentLanguage = language;
-
     return (
-        <LanguageContext.Provider value={{language, currentLanguage, setLanguage, t}}>
+        <LanguageContext.Provider value={{
+            language: i18n.language as Language,
+            currentLanguage: i18n.language as Language,
+            switchLanguage
+        }}>
             {children}
         </LanguageContext.Provider>
     );
 };
 
-export const useLanguage = () => useContext(LanguageContext)
+export const useLanguageSwitch = () => useContext(LanguageContext);

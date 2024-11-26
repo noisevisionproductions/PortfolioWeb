@@ -34,7 +34,7 @@ class AuthServiceTest {
     private JwtService jwtService;
 
     @InjectMocks
-    private AuthService authService;
+    private AuthService baseAuthService;
 
     @Test
     void register_ShouldCreateNewUser_WhenEmailDoesNotExist() {
@@ -53,7 +53,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(request.password())).thenReturn(encodedPassword);
         when(jwtService.generateToken(any(UserModel.class))).thenReturn(generatedToken);
 
-        AuthResponse response = authService.register(request);
+        AuthResponse response = baseAuthService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.token()).isEqualTo(generatedToken);
@@ -83,7 +83,7 @@ class AuthServiceTest {
 
         when(userRepository.existsByEmail(request.email())).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.register(request))
+        assertThatThrownBy(() -> baseAuthService.register(request))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Email already exists");
 
@@ -108,7 +108,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(request.password())).thenReturn(encodedPassword);
         when(jwtService.generateToken(any(UserModel.class))).thenReturn(generatedToken);
 
-        AuthResponse response = authService.register(request);
+        AuthResponse response = baseAuthService.register(request);
 
         assertThat(response).isNotNull();
         assertThat(response.token()).isEqualTo(generatedToken);
@@ -131,7 +131,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
 
-        authService.register(request);
+        baseAuthService.register(request);
 
         verify(passwordEncoder).encode("rawPassword");
         verify(userRepository).save(argThat(user ->

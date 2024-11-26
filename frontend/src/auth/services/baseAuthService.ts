@@ -1,31 +1,9 @@
 import axios from 'axios';
-import {handleApiError} from "./errorHandler";
+import api from "../../utils/axios";
 import {RegisterRequest, AuthResponse, LoginRequest} from "../types/auth";
 import {ValidationError, AuthError} from "../types/errors";
 
-const API_URL = 'http://localhost:8080/api';
-
-const axiosInstance = axios.create({
-    baseURL: `${API_URL}/auth`,
-    headers: {
-        'Content-Type': 'application/json'
-    }
-});
-
-axiosInstance.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
-axiosInstance.interceptors.response.use(
-    response => response,
-    error => {
-        return Promise.reject(error);
-    }
-);
+const API_URL = '/api/auth';
 
 const handleAuthError = (error: unknown) => {
     if (axios.isAxiosError(error)) {
@@ -44,10 +22,10 @@ const handleAuthError = (error: unknown) => {
     throw new AuthError('error', 'generic');
 };
 
-export const authService = {
+export const baseAuthService = {
     async register(userData: RegisterRequest): Promise<AuthResponse> {
         try {
-            const {data} = await axiosInstance.post<AuthResponse>('/register', userData);
+            const {data} = await api.post<AuthResponse>(`${API_URL}/register`, userData);
             localStorage.setItem('token', data.token);
             return data;
         } catch (error) {
@@ -57,7 +35,7 @@ export const authService = {
 
     async login(userData: LoginRequest): Promise<AuthResponse> {
         try {
-            const {data} = await axiosInstance.post<AuthResponse>('/login', userData);
+            const {data} = await api.post<AuthResponse>(`${API_URL}/login`, userData);
             localStorage.setItem('token', data.token);
             return data;
         } catch (error) {
@@ -83,7 +61,7 @@ export const authService = {
             throw new AuthError('error', 'noToken');
         }
         try {
-            const {data} = await axiosInstance.get('/me');
+            const {data} = await api.get(`${API_URL}/me`);
             return data;
         } catch (error) {
             throw handleAuthError(error);

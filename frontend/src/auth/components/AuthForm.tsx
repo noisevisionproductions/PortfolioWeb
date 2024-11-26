@@ -1,6 +1,6 @@
 import React from "react";
 import {SuccessAlert} from "./SuccessAlert";
-import {useLanguage} from "../../utils/translations/LanguageContext";
+import {useTranslation} from "react-i18next";
 
 interface AuthFormProps {
     onSubmit: (e: React.FormEvent) => Promise<void>;
@@ -29,7 +29,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                                                       submitButtonText,
                                                       translateError
                                                   }) => {
-    const {t} = useLanguage();
+    const {t} = useTranslation();
 
     return (
         <>

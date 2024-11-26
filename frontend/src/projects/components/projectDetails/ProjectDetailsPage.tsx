@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
-import {useLanguage} from "../../../utils/translations/LanguageContext";
+import {useTranslation} from "react-i18next";
 import {getImageUrl} from "../../../utils/imageUtils";
 import {ProjectHeader} from "./ProjectHeader";
 import {ProjectImages} from './ProjectImages';
@@ -11,7 +11,7 @@ import {useBaseProject, useProjectImage} from "../../context";
 import {ApiError} from "../../../auth/types/errors";
 
 export const ProjectDetailsPage: React.FC = () => {
-    const {t} = useLanguage();
+    const {t} = useTranslation();
     const navigate = useNavigate();
     const {slug} = useParams<{ slug: string }>();
 
@@ -58,17 +58,15 @@ export const ProjectDetailsPage: React.FC = () => {
 
         try {
             await deleteProject(project.id);
-            // Sukces - możesz dodać navigate('/')
+            navigate('/', {replace: true});
         } catch (error) {
             if (error instanceof ApiError) {
                 if (error.status === 403) {
                     navigate('/unauthorized');
                 } else {
-                    // Obsługa innych błędów API
                     console.error('API Error:', error.message);
                 }
             } else {
-                // Obsługa nieznanych błędów
                 console.error('Unknown error:', error);
             }
         }

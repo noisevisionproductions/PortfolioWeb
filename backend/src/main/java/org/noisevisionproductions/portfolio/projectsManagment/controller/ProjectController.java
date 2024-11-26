@@ -11,6 +11,7 @@ import org.noisevisionproductions.portfolio.projectsManagment.model.ProjectStatu
 import org.noisevisionproductions.portfolio.projectsManagment.service.FileStorageService;
 import org.noisevisionproductions.portfolio.projectsManagment.service.ProjectService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,7 @@ public class ProjectController {
     private final FileStorageService fileStorageService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('CREATE_PROJECTS')")
     public ResponseEntity<Project> createProject(@RequestBody ProjectDTO projectDTO) {
         Project created = projectService.createProject(projectDTO);
         return ResponseEntity.created(URI.create("/api/projects/" + created.getId()))
@@ -54,17 +56,20 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
     public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody ProjectDTO projectDTO) {
         return ResponseEntity.ok(projectService.updateProject(id, projectDTO));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('DELETE_PROJECTS')")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
         projectService.deleteProject(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{projectId}/images")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
     public ResponseEntity<ImageFromProject> addImageToProject(
             @PathVariable Long projectId,
             @RequestBody ProjectImageDTO imageDTO
@@ -75,6 +80,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/images/upload")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
     public ResponseEntity<ImageFromProject> uploadProjectImage(
             @PathVariable Long projectId,
             @RequestParam("file") MultipartFile file
@@ -105,6 +111,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/images/{imageId}")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
     public ResponseEntity<Void> removeImageFromProject(
             @PathVariable Long projectId,
             @PathVariable Long imageId
@@ -114,6 +121,7 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/contributors")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
     public ResponseEntity<Project> addContributor(
             @PathVariable Long projectId,
             @RequestBody ContributorDTO contributorDTO) {
@@ -122,6 +130,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{projectId}/features")
+    @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
     public ResponseEntity<Project> updateFeatures(
             @PathVariable Long projectId,
             @RequestBody List<String> features

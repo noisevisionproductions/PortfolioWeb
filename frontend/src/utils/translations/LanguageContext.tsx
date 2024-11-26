@@ -17,9 +17,15 @@ const LanguageContext = createContext<{
 export const LanguageProvider = ({children}: { children: React.ReactNode }) => {
     const [language, setLanguage] = useState<Language>('pl');
 
-    const t = (path: string) => {
-        // @ts-ignore
-        return path.split('.').reduce((obj, key) => obj[key], translations[language]) as unknown as string;
+    const t = (path: string): string => {
+        return path.split('.').reduce((obj: any, key: string) => {
+            if (obj && typeof obj === 'object' && key in obj) {
+                return obj[key];
+            }
+            console.warn(`Translation missing for key: ${path}, at segment: ${key}`);
+            return path;
+        }, translations[language]);
+
     };
 
     const currentLanguage = language;

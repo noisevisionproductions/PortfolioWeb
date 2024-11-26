@@ -2,8 +2,8 @@ import React, {useState} from 'react';
 import {useNavigate} from "react-router-dom";
 import {LanguageSwitch} from './LanguageSwitch'
 import {useLanguage} from "../../utils/translations/LanguageContext";
-import {authService} from "../../services/authService";
-import {SuccessAlert} from "../auth/SuccessAlert";
+import {authService} from "../../auth/services/authService";
+import {SuccessAlert} from "../../auth/components/SuccessAlert";
 
 interface HeaderProps {
     title: string;
@@ -47,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({title, navigation}) => {
 
     const handleLogoutAlertClose = () => {
         setShowLogoutAlert(false);
-        navigate('/');
+        window.location.reload();
     }
 
     return (

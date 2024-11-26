@@ -4,7 +4,8 @@ export const translations = {
             cancel: "Anuluj",
             remove: "Usuń",
             errorWhileLoading: "Błąd podczas ładowania",
-            backToHome: "Wróć do strony głównej"
+            backToHome: "Wróć do strony głównej",
+            loading: "Ładowanie..."
         },
         header: {
             title: "Moje Portfolio",
@@ -129,7 +130,8 @@ export const translations = {
             cancel: "Cancel",
             remove: "Delete",
             errorWhileLoading: "Error while loading",
-            backToHome: "Back to main page"
+            backToHome: "Back to main page",
+            loading: "Ładowanie..."
         },
         header: {
             title: "My Portfolio",

@@ -2,19 +2,26 @@ import React, {useEffect, useState} from 'react';
 import {Header} from "./components/shared/Header";
 import {useLanguage} from "./utils/translations/LanguageContext";
 import {HeroSection} from "./components/landingPage/HeroSection";
-import {ProjectSection} from "./components/landingPage/ProjectSection";
+import {ProjectSection} from "./projects/components/projectSection/ProjectSection";
 import {ContactSection} from "./components/landingPage/ContactSection";
-import {useProjects} from './hooks/useProjects';
-import {LoginPage} from "./components/auth/LoginPage";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
-import {RegisterPage} from "./components/auth/RegisterPage";
-import ProjectFormPage from "./components/projectCreate/ProjectFormPage";
-import {ProjectDetailsPage} from "./components/projectDetails/ProjectDetailsPage";
+import {LoginPage} from "./auth/components/login/LoginPage";
+import {BrowserRouter, Route, Routes, useNavigate} from "react-router-dom";
+import {RegisterPage} from "./auth/components/register/RegisterPage";
+import ProjectFormPage from "./projects/components/projectCreate/ProjectFormPage";
+import {ProjectDetailsPage} from "./projects/components/projectDetails/ProjectDetailsPage";
+import {ProjectProvider, useBaseProject} from "./projects/context";
+import {AuthProvider} from "./auth/context/BaseAuthContext";
+import {UnauthorizedPage} from "./components/UnauthorizedPage";
+import {setNavigationFunction} from "./auth/services/navigation";
 
 function MainContent() {
     const {t} = useLanguage();
-    const {projects, isLoading, error} = useProjects();
+    const {projects, loading: isLoading, error, fetchProjects} = useBaseProject();
     const [, setShowTimeoutError] = useState(false);
+
+    useEffect(() => {
+        fetchProjects().catch(console.error);
+    }, [fetchProjects]);
 
     useEffect(() => {
         let timer: string | number | NodeJS.Timeout | undefined;
@@ -72,18 +79,27 @@ function MainContent() {
 }
 
 function App() {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        setNavigationFunction((path: string) => navigate(path));
+    }, [navigate]);
+
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<MainContent/>}/>
-                <Route path="/login" element={<LoginPage/>}/>
-                <Route path="/register" element={<RegisterPage/>}/>
-                <Route path="/add-project" element={<ProjectFormPage/>}/>
-                <Route path="/project/:slug" element={<ProjectDetailsPage/>}/>
-                <Route path="/edit-project/:id" element={<ProjectFormPage/>}/>
-            </Routes>
-        </BrowserRouter>
-    )
+        <AuthProvider>
+            <ProjectProvider>
+                <Routes>
+                    <Route path="/" element={<MainContent/>}/>
+                    <Route path="/login" element={<LoginPage/>}/>
+                    <Route path="/register" element={<RegisterPage/>}/>
+                    <Route path="/add-project" element={<ProjectFormPage/>}/>
+                    <Route path="/project/:slug" element={<ProjectDetailsPage/>}/>
+                    <Route path="/edit-project/:id" element={<ProjectFormPage/>}/>
+                    <Route path="/unauthorized" element={<UnauthorizedPage/>}/>
+                </Routes>
+            </ProjectProvider>
+        </AuthProvider>
+    );
 }
 
 export default App;

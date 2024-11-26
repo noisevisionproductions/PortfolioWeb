@@ -3,6 +3,7 @@ package org.noisevisionproductions.portfolio.auth.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.noisevisionproductions.portfolio.auth.model.enums.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -9,7 +9,7 @@ import org.noisevisionproductions.portfolio.auth.dto.AuthResponse;
 import org.noisevisionproductions.portfolio.auth.dto.RegisterRequest;
 import org.noisevisionproductions.portfolio.auth.model.UserModel;
 import org.noisevisionproductions.portfolio.auth.repository.UserRepository;
-import org.noisevisionproductions.portfolio.security.JwtService;
+import org.noisevisionproductions.portfolio.auth.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;

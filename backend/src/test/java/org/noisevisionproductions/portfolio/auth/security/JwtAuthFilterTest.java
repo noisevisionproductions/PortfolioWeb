@@ -1,4 +1,4 @@
-package org.noisevisionproductions.portfolio.security;
+package org.noisevisionproductions.portfolio.auth.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,8 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.noisevisionproductions.portfolio.auth.security.JwtAuthFilter;
-import org.noisevisionproductions.portfolio.auth.security.JwtService;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +17,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -55,6 +54,73 @@ class JwtAuthFilterTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    void shouldNotFilter_ShouldReturnTrue_ForPublicEndpoints() {
+        request.setServletPath("/api/auth/login");
+        assertThat(jwtAuthFilter.shouldNotFilter(request)).isTrue();
+
+        request.setServletPath("/api/auth/register");
+        assertThat(jwtAuthFilter.shouldNotFilter(request)).isTrue();
+
+        request.setServletPath("/api/files/something");
+        assertThat(jwtAuthFilter.shouldNotFilter(request)).isTrue();
+
+        request.setServletPath("/api/projects");
+        request.setMethod("GET");
+        assertThat(jwtAuthFilter.shouldNotFilter(request)).isTrue();
+    }
+
+    @Test
+    void shouldNotFilter_ShouldHandleException_WhenJwtServiceThrowsException() throws ServletException, IOException {
+        String token = "valid.jwt.token";
+        request.addHeader("Authorization", "Bearer " + token);
+
+        when(jwtService.extractUsername(token)).thenThrow(new RuntimeException("JWT Error"));
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void doFilterInternal_ShouldSetAuthenticationDetails() throws ServletException, IOException {
+        String token = "valid.jwt.token";
+        String userEmail = "test@example.com";
+        request.addHeader("Authorization", "Bearer " + token);
+
+        UserDetails userDetails = User.builder()
+                .username(userEmail)
+                .password("password")
+                .authorities(Collections.emptyList())
+                .build();
+
+        when(jwtService.extractUsername(token)).thenReturn(userEmail);
+        when(userDetailsService.loadUserByUsername(userEmail)).thenReturn(userDetails);
+        when(jwtService.isTokenValid(token, userDetails)).thenReturn(true);
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(authentication.getDetails())
+                .isNotNull()
+                .isInstanceOf(WebAuthenticationDetails.class);
+    }
+
+    @Test
+    void doFilterInternal_ShouldNotAuthenticate_WhenTokenIsTooShort() throws ServletException, IOException {
+        request.addHeader("Authorization", "Bearer abc");
+        when(jwtService.extractUsername("abc")).thenReturn(null);
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        verify(jwtService).extractUsername("abc");
+        verifyNoMoreInteractions(jwtService);
+        verifyNoInteractions(userDetailsService);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
     @Test

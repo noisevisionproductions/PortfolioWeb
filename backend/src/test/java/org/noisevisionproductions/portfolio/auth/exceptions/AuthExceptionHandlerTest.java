@@ -1,20 +1,12 @@
-package org.noisevisionproductions.portfolio.exceptions;
+package org.noisevisionproductions.portfolio.auth.exceptions;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.noisevisionproductions.portfolio.auth.exceptions.AuthExceptionHandler;
-import org.springframework.core.MethodParameter;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-
-import java.lang.reflect.Method;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,17 +70,3 @@ class AuthExceptionHandlerTest {
     }
 }
 
-class MockHttpMessageConverter {
-    static MethodParameter mockMethodParameter() {
-        Method method;
-        try {
-            method = MockHttpMessageConverter.class.getDeclaredMethod("mockMethod");
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-        return new MethodParameter(method, -1);
-    }
-
-    private void mockMethod() {
-    }
-}

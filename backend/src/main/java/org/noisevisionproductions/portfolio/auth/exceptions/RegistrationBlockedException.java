@@ -9,7 +9,7 @@ public class RegistrationBlockedException extends RuntimeException {
     private final Duration timeLeft;
 
     public RegistrationBlockedException(Duration timeLeft) {
-        super("Registration is blocked");
+        super("Registration is blocked for " + timeLeft.toMinutes() + " minutes");
         this.timeLeft = timeLeft;
     }
 }

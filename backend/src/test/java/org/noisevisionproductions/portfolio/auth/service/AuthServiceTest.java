@@ -1,18 +1,27 @@
 package org.noisevisionproductions.portfolio.auth.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.noisevisionproductions.portfolio.auth.dto.AuthResponse;
+import org.noisevisionproductions.portfolio.auth.dto.LoginRequest;
 import org.noisevisionproductions.portfolio.auth.dto.RegisterRequest;
+import org.noisevisionproductions.portfolio.auth.dto.UserInfoResponse;
+import org.noisevisionproductions.portfolio.auth.exceptions.InvalidCredentialsException;
 import org.noisevisionproductions.portfolio.auth.model.UserModel;
+import org.noisevisionproductions.portfolio.auth.model.enums.Role;
 import org.noisevisionproductions.portfolio.auth.repository.UserRepository;
 import org.noisevisionproductions.portfolio.auth.security.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,8 +42,61 @@ class AuthServiceTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private SuccessfulRegistrationService registrationService;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private AuthenticationManager authenticationManager;
+
     @InjectMocks
     private AuthService baseAuthService;
+
+    @Test
+    void login_ShouldReturnAuthResponse_WhenCredentialsAreValid() {
+        LoginRequest loginRequest = new LoginRequest("test@example.com", "password123");
+        UserModel userModel = new UserModel();
+        userModel.setEmail(loginRequest.email());
+        userModel.setRole(Role.USER);
+
+        String generatedToken = "generatedToken123";
+
+        when(userRepository.findByEmail(loginRequest.email())).thenReturn(Optional.of(userModel));
+        when(jwtService.generateToken(userModel)).thenReturn(generatedToken);
+
+        AuthResponse response = baseAuthService.login(loginRequest);
+
+        assertThat(response).isNotNull();
+        assertThat(response.token()).isEqualTo(generatedToken);
+        assertThat(response.email()).isEqualTo(loginRequest.email());
+        assertThat(response.role()).isEqualTo(Role.USER.name());
+        assertThat(response.authorities()).contains("ROLE_USER");
+
+        verify(authenticationManager).authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
+        );
+        verify(userRepository).findByEmail(loginRequest.email());
+        verify(jwtService).generateToken(userModel);
+    }
+
+    @Test
+    void login_ShouldThrowException_WhenAuthenticationFails() {
+        LoginRequest loginRequest = new LoginRequest("test@example.com", "wrongPassword");
+
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        assertThatThrownBy(() -> baseAuthService.login(loginRequest))
+                .isInstanceOf(InvalidCredentialsException.class)
+                .hasMessage("Invalid email or password");
+
+        verify(authenticationManager).authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password())
+        );
+        verifyNoInteractions(jwtService);
+    }
 
     @Test
     void register_ShouldCreateNewUser_WhenEmailDoesNotExist() {
@@ -48,7 +110,9 @@ class AuthServiceTest {
 
         String encodedPassword = "encodedPassword123";
         String generatedToken = "generatedToken123";
+        String ipAddress = "127.0.0.1";
 
+        when(this.request.getRemoteAddr()).thenReturn(ipAddress);
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
         when(passwordEncoder.encode(request.password())).thenReturn(encodedPassword);
         when(jwtService.generateToken(any(UserModel.class))).thenReturn(generatedToken);
@@ -81,14 +145,17 @@ class AuthServiceTest {
                 Set.of("Java")
         );
 
+        String ipAddress = "127.0.0.1";
+        when(this.request.getRemoteAddr()).thenReturn(ipAddress);
         when(userRepository.existsByEmail(request.email())).thenReturn(true);
 
         assertThatThrownBy(() -> baseAuthService.register(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Email already exists");
+                .isInstanceOf(RuntimeException.class);
 
+        verify(registrationService).canRegister(ipAddress);
         verify(userRepository).existsByEmail(request.email());
         verifyNoMoreInteractions(passwordEncoder, jwtService, userRepository);
+        verify(registrationService, never()).registerSuccessfulRegistration(ipAddress);
     }
 
     @Test
@@ -103,7 +170,9 @@ class AuthServiceTest {
 
         String encodedPassword = "encodedPassword123";
         String generatedToken = "generatedToken123";
+        String ipAddress = "127.0.0.1";
 
+        when(this.request.getRemoteAddr()).thenReturn(ipAddress);
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
         when(passwordEncoder.encode(request.password())).thenReturn(encodedPassword);
         when(jwtService.generateToken(any(UserModel.class))).thenReturn(generatedToken);
@@ -113,6 +182,8 @@ class AuthServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.token()).isEqualTo(generatedToken);
 
+        verify(registrationService).canRegister(ipAddress);
+        verify(registrationService).registerSuccessfulRegistration(ipAddress);
         verify(userRepository).save(argThat(user ->
                 user.getProgrammingLanguages().isEmpty()
         ));
@@ -128,13 +199,44 @@ class AuthServiceTest {
                 Set.of("Java")
         );
 
+        String ipAddress = "127.0.0.1";
+
+        when(this.request.getRemoteAddr()).thenReturn(ipAddress);
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
 
         baseAuthService.register(request);
 
+        verify(registrationService).canRegister(ipAddress);
+        verify(registrationService).registerSuccessfulRegistration(ipAddress);
         verify(passwordEncoder).encode("rawPassword");
         verify(userRepository).save(argThat(user ->
                 user.getPassword().equals("encodedPassword")));
+    }
+
+    @Test
+    void getCurrentUserInfo_ShouldReturnUserInfo_WhenUserExists() {
+        String email = "test@example.com";
+        UserModel user = new UserModel();
+        user.setEmail(email);
+        user.setName("John Doe");
+        user.setCompanyName("Tech Corp");
+        user.setRole(Role.USER);
+        user.setProgrammingLanguages(Set.of("Java", "Python"));
+
+        when(userRepository.findByEmailWIthProgrammingLanguages(email))
+                .thenReturn(Optional.of(user));
+
+        UserInfoResponse response = baseAuthService.getCurrentUserInfo(email);
+
+        assertThat(response).isNotNull();
+        assertThat(response.email()).isEqualTo(email);
+        assertThat(response.name()).isEqualTo("John Doe");
+        assertThat(response.companyName()).isEqualTo("Tech Corp");
+        assertThat(response.role()).isEqualTo(Role.USER.name());
+        assertThat(response.authorities()).contains("ROLE_USER");
+        assertThat(response.programmingLanguages()).containsExactlyInAnyOrder("Java", "Python");
+
+        verify(userRepository).findByEmailWIthProgrammingLanguages(email);
     }
 }

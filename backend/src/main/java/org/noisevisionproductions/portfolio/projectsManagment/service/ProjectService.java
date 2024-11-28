@@ -2,20 +2,15 @@ package org.noisevisionproductions.portfolio.projectsManagment.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.noisevisionproductions.portfolio.projectsManagment.dto.ContributorDTO;
 import org.noisevisionproductions.portfolio.projectsManagment.dto.ProjectDTO;
-import org.noisevisionproductions.portfolio.projectsManagment.dto.ProjectImageDTO;
 import org.noisevisionproductions.portfolio.projectsManagment.exceptions.FileStorageException;
 import org.noisevisionproductions.portfolio.projectsManagment.model.Contributor;
 import org.noisevisionproductions.portfolio.projectsManagment.model.ImageFromProject;
 import org.noisevisionproductions.portfolio.projectsManagment.model.Project;
-import org.noisevisionproductions.portfolio.projectsManagment.model.ProjectStatus;
-import org.noisevisionproductions.portfolio.projectsManagment.repository.ProjectImageRepository;
 import org.noisevisionproductions.portfolio.projectsManagment.repository.ProjectRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -90,49 +85,6 @@ public class ProjectService {
             }
         }
         projectRepository.deleteById(id);
-    }
-
-    public ImageFromProject addImageToProject(Long projectId, ProjectImageDTO projectImageDTO) {
-        Project project = getProjectById(projectId);
-        ImageFromProject image = new ImageFromProject();
-        image.setImageUrl(projectImageDTO.getImageUrl());
-        image.setCaption(projectImageDTO.getCaption());
-        image.setProject(project);
-        project.getProjectImages().add(image);
-        projectRepository.save(project);
-
-        return image;
-    }
-
-    public void removeImageFromProject(Long projectId, Long imageId) {
-        Project project = getProjectById(projectId);
-
-        Optional<ImageFromProject> imageToRemove = project.getProjectImages()
-                .stream()
-                .filter(image -> image.getId().equals(imageId))
-                .findFirst();
-
-        if (imageToRemove.isPresent()) {
-            ImageFromProject image = imageToRemove.get();
-            try {
-                fileStorageService.deleteFile(image.getImageUrl());
-            } catch (FileStorageException e) {
-                System.out.println("Failed to delete file for image: {}" + image.getImageUrl() + e);
-            }
-
-            project.getProjectImages().removeIf(img -> img.getId().equals(imageId));
-            projectRepository.save(project);
-        }
-    }
-
-    public Project addContributor(Long projectId, ContributorDTO contributorDTO) {
-        Project project = getProjectById(projectId);
-        Contributor contributor = new Contributor();
-        contributor.setName(contributorDTO.getName());
-        contributor.setRole(contributorDTO.getRole());
-        contributor.setProfileUrl(contributorDTO.getProfileUrl());
-        project.getContributors().add(contributor);
-        return projectRepository.save(project);
     }
 
     public Project updateFeatures(Long projectId, List<String> features) {

@@ -25,11 +25,6 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         HashMap<String, Object> extraClaims = new HashMap<>();
 
-        extraClaims.put("role", ((UserModel) userDetails).getRole().name());
-        extraClaims.put("authorities", userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList()));
-
         return buildToken(extraClaims, userDetails);
     }
 
@@ -49,22 +44,6 @@ public class JwtService {
         } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException exception) {
             throw new RuntimeException("Invalid JWT token" + exception);
         }
-    }
-
-    public String extractRole(String token) {
-        return extraClaim(token, claims -> claims.get("role", String.class));
-    }
-
-    public List<String> extractAuthorities(String token) {
-        List<?> rawList = extraClaim(token, claims -> claims.get("authorities", List.class));
-        if (rawList == null) {
-            return Collections.emptyList();
-        }
-
-        return rawList.stream()
-                .filter(Objects::nonNull)
-                .map(Object::toString)
-                .collect(Collectors.toList());
     }
 
     private <T> T extraClaim(String token, Function<Claims, T> claimsResolver) {

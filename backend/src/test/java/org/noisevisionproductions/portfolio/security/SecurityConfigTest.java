@@ -1,70 +1,76 @@
 package org.noisevisionproductions.portfolio.security;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.noisevisionproductions.portfolio.auth.repository.UserRepository;
 import org.noisevisionproductions.portfolio.auth.security.JwtAuthFilter;
+import org.noisevisionproductions.portfolio.auth.security.JwtService;
+import org.noisevisionproductions.portfolio.auth.service.SuccessfulRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SecurityConfig.class)
-@Import(SecurityConfig.class)
+@AutoConfigureMockMvc
 class SecurityConfigTest {
 
     @Autowired
-    private WebApplicationContext context;
+    private MockMvc mockMvc;
 
     @MockBean
     private JwtAuthFilter jwtAuthFilter;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @MockBean
+    private AuthenticationProvider authenticationProvider;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    @MockBean
+    private JwtService jwtService;
 
-    private MockMvc mockMvc;
+    @MockBean
+    private UserRepository userRepository;
 
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(context)
-                .apply(SecurityMockMvcConfigurers.springSecurity())
-                .build();
-    }
+    @MockBean
+    private SuccessfulRegistrationService registrationService;
 
     @Test
-    void shouldAllowAccessToAuthEndpoints() throws Exception {
-        mockMvc.perform(get("/api/auth/login"))
+    void publicEndpoints_ShouldBeAccessibleWithoutAuthentication() throws Exception {
+        mockMvc.perform(post("/api/auth/register"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/auth/register"))
+        mockMvc.perform(post("/api/auth/login"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/projects"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/files/test"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/errors/test"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void passwordEncoderShouldBeBCrypt() {
-        String password = "testPassword";
-        String encodedPassword = passwordEncoder.encode(password);
-
-        assertTrue(encodedPassword.startsWith("$2a$"));
-        assertTrue(passwordEncoder.matches(password, encodedPassword));
+    void cors_ShouldBeConfiguredCorrectly() throws Exception {
+        mockMvc.perform(options("/api/projects")
+                        .header("Origin", "http://localhost:3000")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().exists("Access-Control-Allow-Origin"))
+                .andExpect(header().string("Access-Control-Allow-Methods", containsString("GET")))
+                .andExpect(header().exists("Access-Control-Max-Age"));
     }
 
     @Test
-    void authenticationManagerShouldNotBeNull() {
-        assertNotNull(authenticationManager, "AuthenticationManager should be configured");
+    void optionsRequest_ShouldBeAllowed() throws Exception {
+        mockMvc.perform(options("/api/projects"))
+                .andExpect(status().isOk());
     }
 }

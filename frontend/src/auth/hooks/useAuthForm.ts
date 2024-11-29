@@ -20,20 +20,38 @@ export const useAuthForm = <T extends Record<string, any>>({
     const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
     useEffect(() => {
-        return () => clearError();
+        return () => {
+            clearError();
+        }
     }, [clearError]);
 
     useEffect(() => {
-        if (contextError && !validationErrors.password && !validationErrors.email) {
+        if (contextError) {
             setError(contextError.key || 'generic');
         }
-    }, [contextError, validationErrors.email, validationErrors.password]);
+    }, [contextError]);
+
+    const validateFrom = (): Record<string, string> => {
+        const errors: Record<string, string> = {};
+
+        Object.entries(formData).forEach(([key, value]) => {
+            if (value === '' || value === undefined || value === null) {
+                errors[key] = `${key}Required`;
+            }
+        });
+        return errors;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setValidationErrors({});
         clearError();
+
+        const validationErrors = validateFrom();
+        if (Object.keys(validationErrors).length > 0) {
+            setValidationErrors(validationErrors);
+        }
 
         try {
             await onSubmit(formData);

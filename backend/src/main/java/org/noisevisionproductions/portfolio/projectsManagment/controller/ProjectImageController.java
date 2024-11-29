@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/api/projects/{projectId}/images")
+@RequestMapping("/api/projects")
 @RequiredArgsConstructor
 public class ProjectImageController {
 

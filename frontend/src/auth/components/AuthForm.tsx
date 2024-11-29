@@ -30,18 +30,23 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                                                       translateError
                                                   }) => {
     const {t} = useTranslation();
+    const shouldShowError = error && Object.keys(validationErrors).length === 0;
 
     return (
         <>
             <form onSubmit={onSubmit} className="mt-8 space-y-6" noValidate>
-                {error && Object.keys(validationErrors).length === 0 && (
+                {shouldShowError && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-                         role="alert">
+                         role="alert"
+                         key={error}
+                    >
                         {translateError(error)}
                     </div>
                 )}
 
-                {children}
+                <div className="space-y-4">
+                    {children}
+                </div>
 
                 <div>
                     <button

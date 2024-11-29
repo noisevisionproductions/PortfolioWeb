@@ -173,7 +173,6 @@ export const translations = {
                     passwordLength: "Password must be at least 6 characters long",
                     invalidCredentials: "Invalid email or password",
                     generic: "An error occurred while logging in"
-
                 },
                 success: {
                     title: "Logged in successfully",

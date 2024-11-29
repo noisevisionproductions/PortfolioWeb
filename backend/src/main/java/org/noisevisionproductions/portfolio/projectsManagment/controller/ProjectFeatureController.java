@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/projects/{projectId}/features")
+@RequestMapping("/api/projects")
 public class ProjectFeatureController {
     private final ProjectService projectService;
 

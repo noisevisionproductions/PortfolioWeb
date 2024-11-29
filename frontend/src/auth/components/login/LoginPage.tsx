@@ -4,7 +4,7 @@ import {useBaseAuthContext} from "../../hooks/useBaseAuthContext";
 import {useAuthForm} from "../../hooks/useAuthForm";
 import {AuthPage} from "../AuthPage";
 import {AuthForm} from "../AuthForm";
-import {FormInput} from "../../../components/shared/FormInput";
+import {FormInput} from "@/components/shared/FormInput";
 import {useTranslation} from "react-i18next";
 
 interface LoginPageProps {

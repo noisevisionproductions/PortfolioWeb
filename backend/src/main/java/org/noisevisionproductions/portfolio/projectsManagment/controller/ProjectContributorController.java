@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/projects/{projectId}/contributors")
+@RequestMapping("/api/projects")
 public class ProjectContributorController {
 
     private final ProjectContributorService projectContributorService;

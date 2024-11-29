@@ -1,8 +1,8 @@
-import React, {useEffect, useRef, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {LoginPage} from "./LoginPage";
 import {useBaseAuthContext} from "../../hooks/useBaseAuthContext";
-import {RedirectingPage} from "../../../components/shared/RedirectingPage";
+import {RedirectingPage} from "@/components/shared/RedirectingPage";
 
 const ProtectedLoginRoute = () => {
     const {user, loading} = useBaseAuthContext();

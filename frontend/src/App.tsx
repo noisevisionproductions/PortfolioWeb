@@ -1,21 +1,14 @@
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {Header} from "./components/shared/Header";
 import {useTranslation} from "react-i18next";
 import {HeroSection} from "./components/landingPage/HeroSection";
 import {ProjectSection} from "./projects/components/projectSection/ProjectSection";
 import {ContactSection} from "./components/landingPage/ContactSection";
-import {Route, Routes} from "react-router-dom";
-import {RegisterPage} from "./auth/components/register/RegisterPage";
-import ProjectFormPage from "./projects/components/projectCreate/ProjectFormPage";
-import {ProjectDetailsPage} from "./projects/components/projectDetails/ProjectDetailsPage";
+import {Outlet} from "react-router-dom";
 import {ProjectProvider, useBaseProject} from "./projects/context";
 import {AuthProvider} from "./auth/context/BaseAuthContext";
-import {UnauthorizedPage} from "./components/UnauthorizedPage";
-import {ProtectedRoute} from "./auth/components/ProtectedRoute";
-import {Authority} from "./auth/types/roles";
-import ProtectedLoginRoute from "./auth/components/login/ProtectedLoginRoute";
 
-function MainContent() {
+export function MainContent() {
     const {t} = useTranslation();
     const {projects, loading: isLoading, error, fetchProjects} = useBaseProject();
     const [, setShowTimeoutError] = useState(false);
@@ -83,15 +76,25 @@ function App() {
     return (
         <AuthProvider>
             <ProjectProvider>
+                <Outlet/>
+            </ProjectProvider>
+        </AuthProvider>
+    );
+}
+
+/*function App() {
+    return (
+        <AuthProvider>
+            <ProjectProvider>
                 <Routes>
-                    {/* Publiczne ścieżki */}
+                    {/!* Publiczne ścieżki *!/}
                     <Route path="/" element={<MainContent/>}/>
                     <Route path="/login" element={<ProtectedLoginRoute/>}/>
                     <Route path="/register" element={<RegisterPage/>}/>
                     <Route path="/project/:slug" element={<ProjectDetailsPage/>}/>
                     <Route path="/unauthorized" element={<UnauthorizedPage/>}/>
 
-                    {/* Ścieżki wymagająca konkretnych uprawnień */}
+                    {/!* Ścieżki wymagająca konkretnych uprawnień *!/}
                     <Route path="/add-project" element={
                         <ProtectedRoute requiredAuthorities={[Authority.CREATE_PROJECTS]}>
                             <ProjectFormPage/>
@@ -106,6 +109,6 @@ function App() {
             </ProjectProvider>
         </AuthProvider>
     );
-}
+}*/
 
 export default App;

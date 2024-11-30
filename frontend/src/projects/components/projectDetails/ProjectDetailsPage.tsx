@@ -1,14 +1,14 @@
 import React, {useEffect} from 'react';
 import {useParams, useNavigate} from 'react-router-dom';
 import {useTranslation} from "react-i18next";
-import {getImageUrl} from "../../../utils/imageUtils";
+import {getImageUrl} from "@/utils/imageUtils";
 import {ProjectHeader} from "./ProjectHeader";
 import {ProjectImages} from './ProjectImages';
 import {ProjectDetails} from './ProjectDetails';
-import {LoadingSpinner} from "../../../components/shared/LoadingSpinner";
-import {ErrorMessage} from "../../../components/shared/ErrorMessage";
-import {useBaseProject, useProjectImage} from "../../context";
-import {ApiError} from "../../../auth/types/errors";
+import {LoadingSpinner} from "@/components/shared/LoadingSpinner";
+import {ErrorMessage} from "@/components/shared/ErrorMessage";
+import {useBaseProject, useProjectImage} from "@/projects/context";
+import {ApiError} from "@/auth/types/errors";
 
 export const ProjectDetailsPage: React.FC = () => {
     const {t} = useTranslation();

@@ -1,5 +1,5 @@
-import { ProjectImage} from "../types/project";
-import api from "../../utils/axios";
+import {ProjectImage} from "@/projects/types/project";
+import api from "@/utils/axios";
 
 export const imageService = {
     uploadProjectImage: async (projectId: number, imageFile: File): Promise<ProjectImage> => {

@@ -1,6 +1,6 @@
 import React from "react";
 import {useTranslation} from "react-i18next";
-import {useBaseAuthContext} from "../../auth/hooks/useBaseAuthContext";
+import {useBaseAuthContext} from "@/auth/hooks/useBaseAuthContext";
 import {Loader2, RotateCw} from "lucide-react";
 
 interface RedirectingPageProps {

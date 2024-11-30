@@ -1,6 +1,6 @@
 import React from "react";
 import {Project} from "../../types/project";
-import {LanguageSelector} from "../../../auth/components/register/ProgrammingLanguageSelector";
+import {LanguageSelector} from "@/auth/components/register/ProgrammingLanguageSelector";
 import {BasicInformation} from "./BasicInformation";
 import {ProjectStatusSelector} from "./ProjectStatus";
 import {ProjectDates} from "./ProjectDates";

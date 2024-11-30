@@ -1,5 +1,5 @@
 import React from 'react';
-import {Project, ProjectStatus} from "../../types/project";
+import {Project, ProjectStatus} from "@/projects/types/project";
 
 interface ProjectStatusSelectorProps {
     project: Project;

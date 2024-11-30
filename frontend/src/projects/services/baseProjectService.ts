@@ -1,8 +1,8 @@
-import api from "../../utils/axios";
-import {createErrorHandler} from "../../auth/services/errorHandler";
-import {Project, ProjectDTO} from "../types/project";
-import {baseAuthService} from "../../auth/services/baseAuthService";
-import {ApiError} from "../../auth/types/errors";
+import api from "@/utils/axios";
+import {createErrorHandler} from "@/auth/services/errorHandler";
+import {Project, ProjectDTO} from "@/projects/types/project";
+import {baseAuthService} from "@/auth/services/baseAuthService";
+import {ApiError} from "@/auth/types/errors";
 
 const checkAuth = () => {
     if (!baseAuthService.isAuthenticated()) {

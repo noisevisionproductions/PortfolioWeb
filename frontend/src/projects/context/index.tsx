@@ -1,12 +1,12 @@
 import {BaseProjectProvider} from "./BaseProjectContext";
-import {ProjectImageProvider} from "./imageContext";
-import {ProjectContributorProvider} from "./contributorContext";
-import {ProjectFeatureProvider} from "./featureContext";
+import {ProjectImageProvider} from "./ProjectImageContext";
+import {ProjectContributorProvider} from "./ProjectContributorContext";
+import {ProjectFeatureProvider} from "./ProjectFeatureContext";
 
-import {useBaseProject} from "../hooks/useProject";
-import {useProjectImage} from "./imageContext";
-import {useProjectContributor} from "./contributorContext";
-import {useProjectFeature} from "./featureContext";
+import {useBaseProject} from "../hooks/useBaseProject";
+import {useProjectImage} from "@/projects/hooks/useProjectImage";
+import {useProjectContributor} from "@/projects/hooks/useProjectContributor";
+import {useProjectFeature} from "@/projects/hooks/useProjectFeatures";
 import React from "react";
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({children}) => {

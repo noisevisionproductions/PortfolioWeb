@@ -1,7 +1,7 @@
 import React from 'react';
 import {ArrowLeft, Pencil, Trash2} from 'lucide-react';
-import {useBaseAuthContext} from "../../../auth/hooks/useBaseAuthContext";
-import {Authority} from "../../../auth/types/roles";
+import {useBaseAuthContext} from "@/auth/hooks/useBaseAuthContext";
+import {Authority} from "@/auth/types/roles";
 
 interface ProjectHeaderProps {
     onBack: () => void;

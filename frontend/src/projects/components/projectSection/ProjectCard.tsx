@@ -1,6 +1,6 @@
 import React from 'react';
 import {ChevronRight} from 'lucide-react';
-import {Project} from '../../types/project';
+import {Project} from "@/projects/types/project";
 import {ImageFromProject} from './ImageFromProject';
 import {TechnologyTags} from './TechnologyTags';
 import {useNavigate} from "react-router-dom";

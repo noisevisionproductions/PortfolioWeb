@@ -1,5 +1,5 @@
-import { Contributor, Project} from "../types/project";
-import api from "../../utils/axios";
+import {Contributor, Project} from "@/projects/types/project";
+import api from "@/utils/axios";
 
 export const contributorService = {
     addContributor: async (projectId: number, contributor: Contributor): Promise<Project> => {

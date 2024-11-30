@@ -30,7 +30,6 @@ interface BaseProject {
     contributors: Contributor[];
 }
 
-// Pełny interfejs projektu z wszystkimi polami
 export interface Project extends BaseProject {
     id?: number;
     createdAt?: Date;
@@ -38,7 +37,6 @@ export interface Project extends BaseProject {
     projectImages: ProjectImage[];
 }
 
-// DTO używane do tworzenia/aktualizacji projektu (bez pól generowanych przez backend)
 export interface ProjectDTO extends BaseProject {
 
 }

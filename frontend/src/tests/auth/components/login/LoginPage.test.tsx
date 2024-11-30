@@ -6,7 +6,7 @@ import '@testing-library/jest-dom';
 
 const loginMock = vi.fn();
 
-vi.mock('../../../auth/hooks/useBaseAuthContext', () => ({
+vi.mock('@/auth/hooks/useBaseAuthContext', () => ({
     useBaseAuthContext: vi.fn(() => ({
         login: loginMock,
         register: vi.fn(),

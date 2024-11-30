@@ -1,8 +1,8 @@
 import React from 'react';
 import {Trash2} from 'lucide-react';
-import {ProjectImage} from "../../types/project";
-import {ImageViewerImage} from "../../types/images";
-import {ImageViewer} from "../../../components/shared/ImageViewer";
+import {ProjectImage} from "@/projects/types/project";
+import {ImageViewerImage} from "@/projects/types/images";
+import {ImageViewer} from "@/components/shared/ImageViewer";
 
 interface ProjectImagesProps {
     images: ProjectImage[];

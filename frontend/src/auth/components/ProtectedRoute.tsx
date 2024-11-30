@@ -1,6 +1,6 @@
 import {Navigate, useLocation} from "react-router-dom";
 import {useBaseAuthContext} from "../hooks/useBaseAuthContext";
-import {LoadingSpinner} from "../../components/shared/LoadingSpinner";
+import {LoadingSpinner} from "@/components/shared/LoadingSpinner";
 import React from "react";
 import {Authority} from "../types/roles";
 

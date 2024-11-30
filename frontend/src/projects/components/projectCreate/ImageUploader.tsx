@@ -1,8 +1,8 @@
 import React, {useRef, useState} from "react";
 import {Upload} from "lucide-react";
-import {ActionButton} from "../../../components/shared/ActionButton";
-import {FormInput} from "../../../components/shared/FormInput";
-import {ProjectImage} from "../../types/project";
+import {ActionButton} from "@/components/shared/ActionButton";
+import {FormInput} from "@/components/shared/FormInput";
+import {ProjectImage} from "@/projects/types/project";
 
 interface ImageUploaderProps {
     onImageAdd: (image: ProjectImage & { file?: File }) => void;

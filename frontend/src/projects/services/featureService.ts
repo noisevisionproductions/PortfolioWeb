@@ -1,5 +1,5 @@
-import api from "../../utils/axios";
-import {Project} from "../types/project";
+import api from "@/utils/axios";
+import {Project} from "@/projects/types/project";
 
 export const featureService = {
     updateFeatures: async (projectId: number, features: string[]): Promise<Project> => {

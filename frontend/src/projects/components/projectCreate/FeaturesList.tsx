@@ -1,6 +1,6 @@
 import React from 'react';
-import { FormInput } from "../../../components/shared/FormInput";
-import { Project } from "../../types/project";
+import { FormInput } from "@/components/shared/FormInput";
+import { Project} from "@/projects/types/project";
 
 interface FeaturesListProps {
     project: Project;

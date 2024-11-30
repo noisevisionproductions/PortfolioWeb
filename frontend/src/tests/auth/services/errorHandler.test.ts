@@ -2,7 +2,7 @@ import {describe, test, expect, vi, beforeEach} from 'vitest';
 import {createErrorHandler} from "@/auth/services/errorHandler";
 import {redirectTo} from "@/auth/services/navigationService";
 import {ApiError, ValidationError, AuthError} from "@/auth/types/errors";
-import i18nTranslation from "../../../utils/translations/i18nTranslation";
+import i18nTranslation from "@/utils/translations/i18nTranslation";
 
 vi.mock('../../../auth/services/navigationService', () => ({
     redirectTo: vi.fn()

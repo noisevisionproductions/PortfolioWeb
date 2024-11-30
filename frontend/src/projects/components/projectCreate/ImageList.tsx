@@ -1,7 +1,7 @@
 import React from 'react';
 import {X} from 'lucide-react';
-import {ActionButton} from "../../../components/shared/ActionButton";
-import {ProjectImage} from "../../types/project";
+import {ActionButton} from "@/components/shared/ActionButton";
+import {ProjectImage} from "@/projects/types/project";
 
 interface ImageListProps {
     images: (ProjectImage & { file?: File })[];

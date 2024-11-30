@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {Image as ImageIcon, ChevronLeft, ChevronRight, X} from "lucide-react";
-import {ImageViewerImage} from "../../projects/types/images";
+import {ImageViewerImage} from "@/projects/types/images";
 import {useTranslation} from "react-i18next";
 
 interface ImageViewerProps {

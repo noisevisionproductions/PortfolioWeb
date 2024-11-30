@@ -1,7 +1,7 @@
-import {useLanguageSwitch} from "../../utils/translations/LanguageContext";
+import {useLanguageSwitch} from "@/utils/translations/LanguageContext";
 
 export const LanguageSwitch = () => {
-    const { currentLanguage, switchLanguage } = useLanguageSwitch();
+    const {currentLanguage, switchLanguage} = useLanguageSwitch();
 
     const handleLanguageChange = async () => {
         try {

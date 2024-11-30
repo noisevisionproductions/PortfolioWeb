@@ -1,8 +1,10 @@
-import {render, screen, act, fireEvent} from '@testing-library/react';
+import {render, screen, act} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {vi, describe, test, expect, beforeEach} from 'vitest';
-import ProtectedLoginRoute from "../../../auth/components/login/ProtectedLoginRoute";
-import {useBaseAuthContext} from "../../../auth/hooks/useBaseAuthContext";
+import ProtectedLoginRoute from "@/auth/components/login/ProtectedLoginRoute";
+
+const navigateMock = vi.fn();
+const mockUseBaseAuthContext = vi.fn();
 
 vi.mock('react-router-dom', async () => {
     const actual = await vi.importActual('react-router-dom');
@@ -12,15 +14,15 @@ vi.mock('react-router-dom', async () => {
     };
 });
 
-vi.mock('../../../auth/hooks/useBaseAuthContext', () => ({
-    useBaseAuthContext: vi.fn()
+vi.mock('@/auth/hooks/useBaseAuthContext', () => ({
+    useBaseAuthContext: () => mockUseBaseAuthContext()
 }));
 
-vi.mock('../../../components/shared/RedirectingPage', () => ({
+vi.mock('@/components/shared/RedirectingPage', () => ({
     RedirectingPage: () => <div data-testid="redirecting-page">Redirecting...</div>
 }));
 
-vi.mock('../../../auth/components/login/LoginPage', () => ({
+vi.mock('@/auth/components/login/LoginPage', () => ({
     LoginPage: ({onLoginAttempt}: { onLoginAttempt: () => void }) => (
         <div data-testid="login-page" onClick={onLoginAttempt}>
             Login Page
@@ -28,26 +30,14 @@ vi.mock('../../../auth/components/login/LoginPage', () => ({
     )
 }));
 
-const navigateMock = vi.fn();
-
-const mockAuthContext = {
-    user: null,
-    loading: false,
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn(),
-    hasAuthority: vi.fn()
-};
-
 describe('ProtectedLoginRoute', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-        (useBaseAuthContext as any).mockReturnValue(mockAuthContext);
     });
 
     test('displays RedirectingPage during initial loading', () => {
-        (useBaseAuthContext as any).mockReturnValue({
+        mockUseBaseAuthContext.mockReturnValue({
             user: null,
             loading: true,
             hasAuthority: vi.fn()
@@ -63,7 +53,7 @@ describe('ProtectedLoginRoute', () => {
     });
 
     test('displays LoginPage when user is not authenticated', () => {
-        (useBaseAuthContext as any).mockReturnValue({
+        mockUseBaseAuthContext.mockReturnValue({
             user: null,
             loading: false,
             hasAuthority: vi.fn()
@@ -79,7 +69,7 @@ describe('ProtectedLoginRoute', () => {
     });
 
     test('redirects to home page when user is authenticated', async () => {
-        (useBaseAuthContext as any).mockReturnValue({
+        mockUseBaseAuthContext.mockReturnValue({
             user: {id: 1, name: 'Test User'},
             loading: false,
             hasAuthority: vi.fn()
@@ -101,7 +91,7 @@ describe('ProtectedLoginRoute', () => {
     });
 
     test('does not redirect during login attempt', () => {
-        (useBaseAuthContext as any).mockReturnValue({
+        mockUseBaseAuthContext.mockReturnValue({
             user: null,
             loading: false,
             hasAuthority: vi.fn(),
@@ -127,13 +117,10 @@ describe('ProtectedLoginRoute', () => {
     });
 
     test('waits for loading to complete before making redirect decision', () => {
-        (useBaseAuthContext as any).mockReturnValue({
+        mockUseBaseAuthContext.mockReturnValue({
             user: null,
             loading: true,
-            hasAuthority: vi.fn(),
-            login: vi.fn(),
-            logout: vi.fn(),
-            register: vi.fn()
+            hasAuthority: vi.fn()
         });
 
         const {rerender} = render(
@@ -144,13 +131,7 @@ describe('ProtectedLoginRoute', () => {
 
         expect(screen.getByTestId('redirecting-page')).toBeTruthy();
 
-        (useBaseAuthContext as any).mockReturnValue({
-            user: null,
-            loading: false,
-            hasAuthority: vi.fn()
-        });
-
-        (useBaseAuthContext as any).mockReturnValue({
+        mockUseBaseAuthContext.mockReturnValue({
             user: null,
             loading: false,
             hasAuthority: vi.fn(),
@@ -169,7 +150,7 @@ describe('ProtectedLoginRoute', () => {
     });
 
     test('cleans up timeout on component unmount', () => {
-        (useBaseAuthContext as any).mockReturnValue({
+        mockUseBaseAuthContext.mockReturnValue({
             user: {id: 1, name: 'Test User'},
             loading: false,
             hasAuthority: vi.fn()

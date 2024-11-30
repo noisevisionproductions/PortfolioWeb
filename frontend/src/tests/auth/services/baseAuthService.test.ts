@@ -3,7 +3,7 @@ import {baseAuthService} from "@/auth/services/baseAuthService";
 import {AuthError, ValidationError} from '@/auth/types/errors';
 import api from "../../../utils/axios";
 import axios from "axios";
-import {localStorageMock} from "../../setup";
+import {localStorageMock} from "@/tests/setup";
 
 vi.mock('../../../utils/axios');
 const mockedApi = api as jest.Mocked<typeof api>;

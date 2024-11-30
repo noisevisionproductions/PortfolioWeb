@@ -2,7 +2,7 @@ import React from 'react';
 import {ProjectStatusBadge} from "./ProjectStatusBadge";
 import {ProjectDatesDisplay} from "./ProjectDates";
 import {Link2, Users, Terminal, Code2, CircleDot} from "lucide-react";
-import type {Project} from "../../types/project"
+import type {Project} from "@/projects/types/project";
 
 interface ProjectDetailsProps {
     project: Project;

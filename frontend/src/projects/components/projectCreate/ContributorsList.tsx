@@ -1,6 +1,6 @@
 import React from 'react';
-import { FormInput } from "../../../components/shared/FormInput";
-import { Project, Contributor } from "../../types/project";
+import {FormInput} from "@/components/shared/FormInput";
+import {Project, Contributor} from "@/projects/types/project";
 
 interface ContributorsListProps {
     project: Project;
@@ -8,7 +8,7 @@ interface ContributorsListProps {
     t: (key: string) => string;
 }
 
-export const ContributorsList: React.FC<ContributorsListProps> = ({ project, onProjectChange, t }) => {
+export const ContributorsList: React.FC<ContributorsListProps> = ({project, onProjectChange, t}) => {
     const handleContributorChange = (index: number, field: keyof Contributor, value: string) => {
         const newContributors = [...project.contributors];
         newContributors[index] = {
@@ -21,7 +21,7 @@ export const ContributorsList: React.FC<ContributorsListProps> = ({ project, onP
     const addContributor = () => {
         onProjectChange({
             ...project,
-            contributors: [...project.contributors, { name: '', role: '', profileUrl: '' }]
+            contributors: [...project.contributors, {name: '', role: '', profileUrl: ''}]
         });
     };
 

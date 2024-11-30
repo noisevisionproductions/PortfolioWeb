@@ -1,5 +1,5 @@
 import React from 'react';
-import {ProjectStatus} from '../../types/project';
+import {ProjectStatus} from "@/projects/types/project";
 
 interface ProjectStatusBadgeProps {
     status: ProjectStatus;

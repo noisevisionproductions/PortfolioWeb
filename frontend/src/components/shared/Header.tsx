@@ -2,10 +2,10 @@ import React, {useState} from 'react';
 import {useNavigate} from "react-router-dom";
 import {LanguageSwitch} from './LanguageSwitch'
 import {useTranslation} from "react-i18next";
-import {baseAuthService} from "../../auth/services/baseAuthService";
-import {SuccessAlert} from "../../auth/components/SuccessAlert";
-import {useBaseAuthContext} from "../../auth/hooks/useBaseAuthContext";
-import {Authority} from "../../auth/types/roles";
+import {baseAuthService} from "@/auth/services/baseAuthService";
+import {SuccessAlert} from "@/auth/components/SuccessAlert";
+import {useBaseAuthContext} from "@/auth/hooks/useBaseAuthContext";
+import {Authority} from "@/auth/types/roles";
 
 interface HeaderProps {
     title: string;

@@ -1,7 +1,7 @@
 import React from 'react';
 import {ProjectImage as ProjectImageType} from '../../types/project';
-import {getImageUrl} from "../../../utils/imageUtils";
-import {ImageViewer} from "../../../components/shared/ImageViewer";
+import {getImageUrl} from "@/utils/imageUtils";
+import {ImageViewer} from "@/components/shared/ImageViewer";
 
 interface ProjectImageProps {
     images: ProjectImageType[];

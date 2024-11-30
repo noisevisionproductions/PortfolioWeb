@@ -1,20 +1,8 @@
 import React, {createContext, useState, useCallback} from "react";
-import {Project, ProjectDTO} from '../types/project';
-import {baseProjectService} from '../services';
-import {ApiError} from "../../auth/types/errors";
-
-export interface BaseProjectContextType {
-    projects: Project[];
-    selectedProject: Project | null;
-    loading: boolean;
-    error: string | null;
-    fetchProjects: () => Promise<void>;
-    getProject: (id: number) => Promise<Project>;
-    getProjectBySlug: (slug: string) => Promise<Project>;
-    createProject: (projectData: ProjectDTO) => Promise<Project>;
-    updateProject: (id: number, projectData: ProjectDTO) => Promise<Project>;
-    deleteProject: (id: number) => Promise<void>;
-}
+import {Project, ProjectDTO} from "@/projects/types/project";
+import {baseProjectService} from "@/projects/services";
+import {ApiError} from "@/auth/types/errors";
+import {BaseProjectContextType} from "@/projects/types/context";
 
 export const BaseProjectContext = createContext<BaseProjectContextType | undefined>(undefined);
 
@@ -63,7 +51,7 @@ export const BaseProjectProvider: React.FC<{ children: React.ReactNode }> = ({ch
             return project;
         } catch (err) {
             setError('Błąd podczas pobierania projektu');
-            console.error(err);
+            console.error('Failed to create project:', err);
             throw err;
         } finally {
             setLoading(false);

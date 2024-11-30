@@ -1,12 +1,14 @@
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, screen, waitFor, fireEvent} from '@testing-library/react';
 import '@testing-library/jest-dom';
-import {AuthProvider, BaseAuthContext} from "../../auth/context/BaseAuthContext";
+import {AuthProvider, BaseAuthContext} from "@/auth/context/BaseAuthContext";
 import {baseAuthService} from "@/auth/services/baseAuthService";
 import {AuthError} from "@/auth/types/errors";
 import {useContext} from 'react';
 
-vi.mock('../../auth/services/baseAuthService', () => ({
+const originalError = console.error;
+
+vi.mock('@/auth/services/baseAuthService', () => ({
     baseAuthService: {
         isAuthenticated: vi.fn(),
         login: vi.fn(),
@@ -24,8 +26,22 @@ const TestComponent = () => {
             <div data-testid="loading">{context.loading.toString()}</div>
             <div data-testid="user">{JSON.stringify(context.user)}</div>
             <div data-testid="error">{context.error?.type}</div>
-            <button onClick={() => context.login({email: 'test@example.com', password: 'password'})}>Login</button>
-            <button onClick={() => context.logout()}>Logout</button>
+            <button onClick={async () => {
+                try {
+                    await context.login({email: 'test@example.com', password: 'password'});
+                } catch (e) {
+                    // ignoruj błąd w teście
+                }
+            }}>Login
+            </button>
+            <button onClick={async () => {
+                try {
+                    context.logout();
+                } catch (e) {
+                    // ignoruj błąd w teście
+                }
+            }}>Logout
+            </button>
         </div>
     );
 };
@@ -37,6 +53,23 @@ describe('AuthProvider', () => {
 
     afterEach(() => {
         vi.resetAllMocks();
+    });
+
+    beforeAll(() => {
+        console.error = (...args: any[]) => {
+            const errorMessage = args[0]?.toString() || '';
+            if (
+                errorMessage.includes('Auth error:') ||
+                errorMessage.includes('AuthContext - Error fetching user:') ||
+                errorMessage.includes('Authentication Error') ||
+                (args[0] instanceof AuthError) ||
+                errorMessage.includes('Failed to fetch') ||
+                errorMessage.includes('Falling through to default error case')
+            ) {
+                return;
+            }
+            originalError(...args);
+        };
     });
 
     test('powinien wyrenderować się z początkowym stanem', () => {

@@ -3,13 +3,13 @@ import {useBaseAuthContext} from "../../hooks/useBaseAuthContext";
 import {useAuthForm} from "../../hooks/useAuthForm";
 import {AuthPage} from "../AuthPage";
 import {AuthForm} from "../AuthForm";
-import {FormInput} from "../../../components/shared/FormInput";
+import {FormInput} from "@/components/shared/FormInput";
 import {LanguageSelector} from './ProgrammingLanguageSelector';
 import programmingLanguages from '../../../assets/programmingLanguages.json';
 import {useTranslation} from "react-i18next";
 import {useNavigate} from "react-router-dom";
 import {RegisterRequest} from "../../types/auth";
-import {useLanguageSwitch} from "../../../utils/translations/LanguageContext";
+import {useLanguageSwitch} from "@/utils/translations/LanguageContext";
 
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate()

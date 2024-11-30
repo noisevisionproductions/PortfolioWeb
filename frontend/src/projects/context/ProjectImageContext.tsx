@@ -1,26 +1,20 @@
-import { imageService } from '../services';
-import React, {createContext, useContext, useState} from "react";
-import {useBaseProject} from "../hooks/useProject";
+import {imageService} from "@/projects/services";
+import React, {createContext, useState} from "react";
+import {useBaseProject} from "@/projects/hooks/useBaseProject";
+import {ProjectImageContextType} from "@/projects/types/context";
 
-interface ProjectImageContextType {
-    loading: boolean;
-    error: string | null;
-    uploadProjectImage: (projectId: number, imageFile: File) => Promise<void>;
-    deleteProjectImage: (projectId: number, imageId: number) => Promise<void>;
-}
+export const ProjectImageContext = createContext<ProjectImageContextType | undefined>(undefined);
 
-const ProjectImageContext = createContext<ProjectImageContextType | undefined>(undefined);
-
-export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({children}) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { fetchProjects } = useBaseProject(); // Używamy kontekstu bazowego do odświeżania projektów
+    const {fetchProjects} = useBaseProject();
 
     const uploadProjectImage = async (projectId: number, imageFile: File) => {
         setLoading(true);
         try {
             await imageService.uploadProjectImage(projectId, imageFile);
-            await fetchProjects(); // Odświeżamy projekty po dodaniu obrazu
+            await fetchProjects();
             setError(null);
         } catch (err) {
             setError('Błąd podczas dodawania obrazu');
@@ -54,12 +48,4 @@ export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({ 
             {children}
         </ProjectImageContext.Provider>
     );
-};
-
-export const useProjectImage = () => {
-    const context = useContext(ProjectImageContext);
-    if (context === undefined) {
-        throw new Error('useProjectImage must be used within a ProjectImageProvider');
-    }
-    return context;
 };

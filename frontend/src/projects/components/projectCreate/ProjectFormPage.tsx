@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {useTranslation} from "react-i18next";
-import {Header} from '../../../components/shared/Header';
-import {ActionButton} from '../../../components/shared/ActionButton';
-import {Project, ProjectImage, ProjectStatus} from '../../types/project';
+import {Header} from '@/components/shared/Header';
+import {ActionButton} from '@/components/shared/ActionButton';
+import {Project, ProjectImage, ProjectStatus} from "@/projects/types/project";
 import {ProjectForm} from './ProjectForm';
 import {ImageUploader} from './ImageUploader';
 import {ImageList} from './ImageList';
 import programmingLanguages from '../../../assets/programmingLanguages.json';
-import {LoadingSpinner} from "../../../components/shared/LoadingSpinner";
+import {LoadingSpinner} from "@/components/shared/LoadingSpinner";
 import {useBaseProject, useProjectImage, useProjectContributor, useProjectFeature} from "../../context";
-import {useLanguageSwitch} from "../../../utils/translations/LanguageContext";
+import {useLanguageSwitch} from "@/utils/translations/LanguageContext";
 
 const ProjectFormPage = () => {
     const {t} = useTranslation();
@@ -28,9 +28,9 @@ const ProjectFormPage = () => {
         updateProject
     } = useBaseProject();
 
-    const { uploadProjectImage }= useProjectImage();
-    const {addContributor } = useProjectContributor();
-    const { updateFeatures } = useProjectFeature();
+    const {uploadProjectImage} = useProjectImage();
+    const {addContributor} = useProjectContributor();
+    const {updateFeatures} = useProjectFeature();
 
     const availableTechnologies = [
         ...programmingLanguages.languages,

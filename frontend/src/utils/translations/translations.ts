@@ -13,7 +13,17 @@ export const translations = {
                 noPermissions: "Brak uprawnień do wykonania tej akcji",
                 unexpected: "Wystąpił nieoczekiwany błąd",
                 sessionExpired: "Sesja wygasła. Zaloguj się ponownie",
-                noPermissionsDescription: "Nie posiadasz uprawnień do wykonania tej akcji"
+                noPermissionsDescription: "Nie posiadasz uprawnień do wykonania tej akcji",
+                contributor: {
+                    add: "Wystąpił błąd podczas dodawania kontrybutora"
+                },
+                feature: {
+                    update: "Wystąpił błąd podczas aktualizacji funkcji"
+                },
+                image: {
+                    add: "Błąd podczas dodawania obrazu",
+                    delete: "Błąd podczas usuwania obrazu"
+                }
             },
             header: {
                 title: "Moje Portfolio",
@@ -149,6 +159,16 @@ export const translations = {
                 unexpected: "An unexpected error occurred",
                 sessionExpired: "Session expired. Please log in again",
                 noPermissionsDescription: "You don't have permission to perform this action",
+                contributor: {
+                    add: "An error occurred while adding a contributor."
+                },
+                feature: {
+                    update: "An error occurred while updating a feature"
+                },
+                image: {
+                    add: "An error occurred while adding an image",
+                    delete: "An error occurred while deleting an image"
+                }
             },
             header: {
                 title: "My Portfolio",

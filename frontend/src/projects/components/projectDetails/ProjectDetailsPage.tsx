@@ -88,10 +88,18 @@ export const ProjectDetailsPage: React.FC = () => {
     if (error || !project) return <ErrorMessage error={error} onBack={() => navigate('/')} t={t}/>;
 
     return (
-        <div className="min-h-screen bg-gray-50 w-full" onClick={handleBackgroundClick}>
-            <div className="max-w-4xl mx-auto px-4 py-8" onClick={e => e.stopPropagation()}>
+        <div
+            className="min-h-screen bg-gray-50 w-full"
+            onClick={handleBackgroundClick}
+            data-testid="project-background"
+        >
+            <div
+                className="max-w-4xl mx-auto px-4 py-8"
+                onClick={e => e.stopPropagation()}
+                data-testid="project-content"
+            >
                 <ProjectHeader
-                    onBack={() => navigate('/')}
+                onBack={() => navigate('/')}
                     onEdit={() => navigate(`/edit-project/${project?.id}`)}
                     onDelete={handleProjectDelete}
                     t={t}

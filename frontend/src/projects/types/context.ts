@@ -1,4 +1,4 @@
-import { Project, ProjectDTO, Contributor } from "./project";
+import {Project, ProjectDTO, Contributor} from "./project";
 
 export interface BaseProjectContextType {
     projects: Project[];

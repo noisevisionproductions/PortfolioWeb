@@ -22,27 +22,26 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     const canDeleteProjects = hasAuthority(Authority.DELETE_PROJECTS);
 
     const renderManagementButtons = () => {
-        if (!canEditProjects && !canDeleteProjects) {
-            console.log('ProjectHeader - No permissions, not rendering buttons');
-            return null;
-        }
-
         return (
             <div className="flex gap-2">
-                <button
-                    onClick={onEdit}
-                    className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                    <Pencil className="h-4 w-4 mr-2"/>
-                    {t('projectDetails.edit')}
-                </button>
-                <button
-                    onClick={onDelete}
-                    className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                >
-                    <Trash2 className="h-4 w-4 mr-2"/>
-                    {t('projectDetails.delete')}
-                </button>
+                {canEditProjects && (
+                    <button
+                        onClick={onEdit}
+                        className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    >
+                        <Pencil className="h-4 w-4 mr-2"/>
+                        {t('projectDetails.edit')}
+                    </button>
+                )}
+                {canDeleteProjects && (
+                    <button
+                        onClick={onDelete}
+                        className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                    >
+                        <Trash2 className="h-4 w-4 mr-2"/>
+                        {t('projectDetails.delete')}
+                    </button>
+                )}
             </div>
         );
     };

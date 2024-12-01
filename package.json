@@ -11,6 +11,9 @@
   },
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",
-    "concurrently": "^9.1.0"
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/react-hooks": "^7.0.2",
+    "concurrently": "^9.1.0",
+    "vitest": "^2.1.5"
   }
 }

@@ -2,6 +2,7 @@ import {imageService} from "@/projects/services";
 import React, {createContext, useState} from "react";
 import {useBaseProject} from "@/projects/hooks/useBaseProject";
 import {ProjectImageContextType} from "@/projects/types/context";
+import {useTranslation} from "react-i18next";
 
 export const ProjectImageContext = createContext<ProjectImageContextType | undefined>(undefined);
 
@@ -9,6 +10,7 @@ export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({c
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const {fetchProjects} = useBaseProject();
+    const {t} = useTranslation();
 
     const uploadProjectImage = async (projectId: number, imageFile: File) => {
         setLoading(true);
@@ -17,7 +19,7 @@ export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({c
             await fetchProjects();
             setError(null);
         } catch (err) {
-            setError('Błąd podczas dodawania obrazu');
+            setError(t('errors.image.add'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -31,7 +33,7 @@ export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({c
             await fetchProjects();
             setError(null);
         } catch (err) {
-            setError('Błąd podczas usuwania obrazu');
+            setError(t('errors.image.delete'));
             console.error(err);
         } finally {
             setLoading(false);

@@ -81,7 +81,6 @@ const ProjectFormPage = () => {
                 } = project;
                 savedProject = await updateProject(id, projectDTO);
 
-                // Zachowaj referencję do istniejących obrazów
                 savedProject = {
                     ...savedProject,
                     projectImages: project.projectImages.filter(img => !('file' in img))

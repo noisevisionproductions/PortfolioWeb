@@ -32,6 +32,7 @@ export const ProjectImages: React.FC<ProjectImagesProps> = ({
                     onImageDelete(imageId);
                 }}
                 className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg z-10"
+                data-testid={`delete-image-${imageId}`}
             >
                 <Trash2 className="h-4 w-4"/>
             </button>

@@ -22,7 +22,16 @@ export default defineConfig({
         open: true,
         strictPort: true,
         watch: {
-            usePolling: true
+            // Ignoruj pewne katalogi/pliki
+            ignored: [
+                '**/node_modules/**',
+                '**/dist/**',
+                '**/.git/**',
+                '**/public/**',
+                '**/test/**',
+                '**/coverage/**'
+            ],
+            usePolling: false,
         },
         proxy: {
             '/api': {

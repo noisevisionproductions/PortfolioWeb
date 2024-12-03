@@ -7,7 +7,6 @@
       "DOM.Iterable"
     ],
     "module": "ESNext",
-    "allowImportingTsExtensions": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "baseUrl": ".",
@@ -31,6 +30,6 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "../frontend/src"
+    "src"
   ]
 }

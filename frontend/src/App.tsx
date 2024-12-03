@@ -11,21 +11,25 @@ import {AuthProvider} from "./auth/context/BaseAuthContext";
 export function MainContent() {
     const {t} = useTranslation();
     const {projects, loading: isLoading, error, fetchProjects} = useBaseProject();
-    const [, setShowTimeoutError] = useState(false);
+    const [_, setShowTimeoutError] = useState(false);
 
     useEffect(() => {
         fetchProjects().catch(console.error);
     }, [fetchProjects]);
 
     useEffect(() => {
-        let timer: string | number | NodeJS.Timeout | undefined;
+        let timer: NodeJS.Timeout | undefined;
         if (isLoading) {
             timer = setTimeout(() => {
                 setShowTimeoutError(true);
             }, 5000);
         }
-        return () => clearTimeout(timer);
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
     }, [isLoading]);
+
+    const safeProjects = Array.isArray(projects) ? projects : [];
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -57,8 +61,12 @@ export function MainContent() {
                             <div className="text-center py-12 text-red-600">
                                 {error}
                             </div>
+                        ) : safeProjects.length === 0 ? (
+                            <div className="text-center py-12">
+                                {t('projectSection.noProjects')}
+                            </div>
                         ) : (
-                            <ProjectSection projects={projects}/>
+                            <ProjectSection projects={safeProjects}/>
                         )}
                     </div>
                 </section>

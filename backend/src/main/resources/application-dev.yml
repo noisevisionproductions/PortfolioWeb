@@ -12,8 +12,10 @@ spring:
     port: 6379
     database: 0
     timeout: 60000
+    serializer: org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: true
@@ -22,7 +24,9 @@ spring:
         format_sql: false
         show_sql: false
         dialect: org.hibernate.dialect.PostgreSQLDialect
-  
+        enable_lazy_load_no_trans: true
+      open-in-view: false
+
   servlet:
     multipart:
       enabled: true
@@ -51,6 +55,7 @@ logging:
     root: INFO
     org:
       springframework:
+        boot:
         web: DEBUG
         security: DEBUG
         '*': INFO

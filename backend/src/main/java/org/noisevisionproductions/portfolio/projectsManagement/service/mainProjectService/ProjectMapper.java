@@ -3,10 +3,13 @@ package org.noisevisionproductions.portfolio.projectsManagement.service.mainProj
 import lombok.RequiredArgsConstructor;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ContributorDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectDTO;
+import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectImageDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Contributor;
+import org.noisevisionproductions.portfolio.projectsManagement.model.ImageFromProject;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
 import org.noisevisionproductions.portfolio.projectsManagement.service.SlugGenerator;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +21,7 @@ public class ProjectMapper {
 
     private final SlugGenerator slugGenerator;
 
+    @Transactional
     public Project toEntity(ProjectDTO dto) {
         if (dto == null) {
             return null;
@@ -38,6 +42,7 @@ public class ProjectMapper {
             return null;
         }
         ProjectDTO dto = new ProjectDTO();
+        dto.setId(project.getId());
         dto.setName(project.getName());
         dto.setSlug(project.getSlug());
         dto.setDescription(project.getDescription());
@@ -45,6 +50,12 @@ public class ProjectMapper {
         dto.setStatus(project.getStatus());
         dto.setStartDate(project.getStartDate());
         dto.setEndDate(project.getEndDate());
+
+       /* Hibernate.initialize(project.getFeatures());
+        Hibernate.initialize(project.getTechnologies());
+        Hibernate.initialize(project.getContributors());
+        Hibernate.initialize(project.getProjectImages());*/
+
         dto.setFeatures(new ArrayList<>(project.getFeatures()));
         dto.setTechnologies(new ArrayList<>(project.getTechnologies()));
 
@@ -53,6 +64,13 @@ public class ProjectMapper {
                     .map(this::contributorToDTO)
                     .collect(Collectors.toList());
             dto.setContributors(contributorDTOs);
+        }
+
+        if (project.getProjectImages() != null) {
+            List<ProjectImageDTO> imageDTOs = project.getProjectImages().stream()
+                    .map(this::imageToDTO)
+                    .collect(Collectors.toList());
+            dto.setProjectImages(imageDTOs);
         }
 
         return dto;
@@ -81,9 +99,7 @@ public class ProjectMapper {
 
         project.getContributors().clear();
         if (dto.getContributors() != null) {
-            dto.getContributors().forEach(contributorDTO -> {
-                project.getContributors().add(contributorToEntity(contributorDTO));
-            });
+            dto.getContributors().forEach(contributorDTO -> project.getContributors().add(contributorToEntity(contributorDTO)));
         }
     }
 
@@ -109,5 +125,15 @@ public class ProjectMapper {
         contributor.setRole(dto.getRole());
         contributor.setProfileUrl(dto.getProfileUrl());
         return contributor;
+    }
+
+    private ProjectImageDTO imageToDTO(ImageFromProject image) {
+        if (image == null) return null;
+
+        ProjectImageDTO dto = new ProjectImageDTO();
+        dto.setImageUrl(image.getImageUrl());
+        dto.setImageUrl(image.getImageUrl());
+        dto.setCaption(image.getCaption());
+        return dto;
     }
 }

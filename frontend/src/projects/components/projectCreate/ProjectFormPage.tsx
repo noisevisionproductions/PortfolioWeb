@@ -129,10 +129,10 @@ const ProjectFormPage = () => {
         }));
     };
 
-    const handleRemoveImage = (imageId: number) => {
+    const handleRemoveImage = (index: number) => {
         setProject(prev => ({
             ...prev,
-            projectImages: prev.projectImages?.filter(img => img.id !== imageId)
+            projectImages: prev.projectImages.filter((_, idx) => idx !== index)
         }));
     };
 
@@ -185,6 +185,7 @@ const ProjectFormPage = () => {
                             <ImageList
                                 images={project.projectImages}
                                 onRemoveImage={handleRemoveImage}
+                                t={t}
                             />
                         </div>
 

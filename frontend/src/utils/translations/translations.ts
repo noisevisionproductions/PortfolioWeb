@@ -96,6 +96,7 @@ export const translations = {
                 submit: "Wyślij"
             },
             projectForm: {
+                imageAlt: "Obraz",
                 createTitle: "Dodaj nowy projekt",
                 editTitle: "Edytuj projekt",
                 projectName: "Nazwa projektu",
@@ -242,6 +243,7 @@ export const translations = {
                 submit: "Submit"
             },
             projectForm: {
+                imageAlt: "Image",
                 createTitle: "Add new project",
                 editTitle: "Edit project",
                 projectName: "Project name",

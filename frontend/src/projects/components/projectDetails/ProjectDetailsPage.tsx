@@ -99,7 +99,7 @@ export const ProjectDetailsPage: React.FC = () => {
                 data-testid="project-content"
             >
                 <ProjectHeader
-                onBack={() => navigate('/')}
+                    onBack={() => navigate('/')}
                     onEdit={() => navigate(`/edit-project/${project?.id}`)}
                     onDelete={handleProjectDelete}
                     t={t}
@@ -107,7 +107,7 @@ export const ProjectDetailsPage: React.FC = () => {
 
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden" onClick={e => e.stopPropagation()}>
                     <ProjectImages
-                        images={project.projectImages}
+                        images={project.projectImages || []}
                         projectName={project.name}
                         onImageDelete={handleImageDelete}
                         getImageUrl={getImageUrl}

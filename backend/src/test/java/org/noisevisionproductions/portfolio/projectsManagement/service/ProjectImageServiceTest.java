@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.noisevisionproductions.portfolio.cache.service.project.ProjectCacheService;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectImageDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.exceptions.FileStorageException;
 import org.noisevisionproductions.portfolio.projectsManagement.model.ImageFromProject;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -30,6 +32,9 @@ class ProjectImageServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+    private ProjectCacheService projectCacheService;
 
     @InjectMocks
     private ProjectImageService projectImageService;
@@ -52,12 +57,64 @@ class ProjectImageServiceTest {
 
         verify(projectService).getProjectById(projectId);
         verify(projectRepository).save(project);
+        verify(projectCacheService).cache(projectId, project);
 
         assertThat(result).isNotNull();
         assertThat(result.getImageUrl()).isEqualTo(projectImageDTO.getImageUrl());
         assertThat(result.getCaption()).isEqualTo(projectImageDTO.getCaption());
         assertThat(result.getProject()).isEqualTo(project);
         assertThat(project.getProjectImages()).contains(result);
+    }
+
+    @Test
+    void addImageToProject_ShouldNotCacheProject_WhenSaveFails() {
+        Long projectId = 1L;
+        ProjectImageDTO projectImageDTO = new ProjectImageDTO();
+        projectImageDTO.setImageUrl("/images/test.jpg");
+
+        Project project = new Project();
+        project.setId(projectId);
+        project.setProjectImages(new ArrayList<>());
+
+        when(projectService.getProjectById(projectId)).thenReturn(project);
+        when(projectRepository.save(any(Project.class))).thenThrow(new RuntimeException("Save failed"));
+
+        assertThatThrownBy(() ->
+                projectImageService.addImageToProject(projectId, projectImageDTO))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Save failed");
+
+        verify(projectService).getProjectById(projectId);
+        verify(projectRepository).save(any(Project.class));
+        verify(projectCacheService, never()).cache(eq(projectId), any(Project.class));
+    }
+
+    @Test
+    void addImageToProject_ShouldUpdateCache_AfterSuccessfulSave() {
+        Long projectId = 1L;
+        ProjectImageDTO projectImageDTO = new ProjectImageDTO();
+        projectImageDTO.setImageUrl("/images/test.jpg");
+        projectImageDTO.setCaption("Test Caption");
+
+        Project project = new Project();
+        project.setId(projectId);
+        project.setProjectImages(new ArrayList<>());
+
+        Project savedProject = new Project();
+        savedProject.setId(projectId);
+        savedProject.setProjectImages(new ArrayList<>());
+
+        when(projectService.getProjectById(projectId)).thenReturn(project);
+        when(projectRepository.save(any(Project.class))).thenReturn(savedProject);
+
+        ImageFromProject result = projectImageService.addImageToProject(projectId, projectImageDTO);
+
+        verify(projectService).getProjectById(projectId);
+        verify(projectRepository).save(project);
+        verify(projectCacheService).cache(projectId, savedProject);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getImageUrl()).isEqualTo(projectImageDTO.getImageUrl());
     }
 
     @Test
@@ -84,6 +141,7 @@ class ProjectImageServiceTest {
         verify(projectService).getProjectById(projectId);
         verify(fileStorageService).deleteFile(imageUrl);
         verify(projectRepository).save(project);
+        verify(projectCacheService).cache(projectId, project);
         assertThat(project.getProjectImages()).isEmpty();
     }
 
@@ -111,6 +169,7 @@ class ProjectImageServiceTest {
         verify(projectService).getProjectById(projectId);
         verify(fileStorageService).deleteFile(imageUrl);
         verify(projectRepository).save(project);
+        verify(projectCacheService).cache(projectId, project);
         assertThat(project.getProjectImages()).isEmpty();
     }
 }

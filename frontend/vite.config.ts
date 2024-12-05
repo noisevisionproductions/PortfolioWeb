@@ -4,6 +4,9 @@ import * as path from "node:path";
 
 export default defineConfig({
     plugins: [react()],
+    define: {
+        __API_URL__: JSON.stringify(process.env.VITE_API_URL),
+    },
     base: '/',
     build: {
         outDir: 'dist',
@@ -22,7 +25,6 @@ export default defineConfig({
         open: true,
         strictPort: true,
         watch: {
-            // Ignoruj pewne katalogi/pliki
             ignored: [
                 '**/node_modules/**',
                 '**/dist/**',

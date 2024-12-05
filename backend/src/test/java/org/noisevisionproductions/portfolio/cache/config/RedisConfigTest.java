@@ -1,4 +1,4 @@
-package org.noisevisionproductions.portfolio.config;
+package org.noisevisionproductions.portfolio.cache.config;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

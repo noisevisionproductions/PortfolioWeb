@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.noisevisionproductions.portfolio.cache.service.project.ProjectCacheService;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ContributorDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Contributor;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
@@ -28,6 +29,9 @@ class ProjectContributorServiceTest {
 
     @Mock
     private ProjectService projectService;
+
+    @Mock
+    private ProjectCacheService projectCacheService;
 
     @InjectMocks
     private ProjectContributorService projectContributorService;
@@ -57,6 +61,7 @@ class ProjectContributorServiceTest {
 
         verify(projectService).getProjectById(projectId);
         verify(projectRepository).save(any(Project.class));
+        verify(projectCacheService).cache(projectId, savedProject);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(projectId);
@@ -118,6 +123,7 @@ class ProjectContributorServiceTest {
 
         verify(projectService).getProjectById(projectId);
         verify(projectRepository).save(any(Project.class));
+        verify(projectCacheService).cache(projectId, savedProject);
 
         assertThat(result).isNotNull();
         assertThat(result.getContributors()).hasSize(2);

@@ -1,5 +1,5 @@
 export interface ProjectImage {
-    id: number;
+    id?: number;
     imageUrl: string;
     caption?: string;
     file?: File;

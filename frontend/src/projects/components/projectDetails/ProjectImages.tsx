@@ -17,14 +17,20 @@ export const ProjectImages: React.FC<ProjectImagesProps> = ({
                                                                 onImageDelete,
                                                                 getImageUrl
                                                             }) => {
+    if (!images || images.length === 0) {
+        return null;
+    }
+
     const mappedImages: ImageViewerImage[] = images.map(image => ({
         id: image.id,
-        url: image.imageUrl,
+        url: image.imageUrl || '',
         alt: image.caption || projectName,
         caption: image.caption
     }));
 
     const renderImageDeleteButton = (imageId: number) => {
+        if (!imageId) return null;
+
         return (
             <button
                 onClick={(e) => {
@@ -42,7 +48,7 @@ export const ProjectImages: React.FC<ProjectImagesProps> = ({
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
             {mappedImages.map((image, index) => (
-                <div key={image.id} className="relative group">
+                <div key={`image-${image.id || index}`} className="relative group">
                     <ImageViewer
                         images={mappedImages}
                         initialIndex={index}
@@ -52,7 +58,7 @@ export const ProjectImages: React.FC<ProjectImagesProps> = ({
                         className="!rounded-lg !aspect-[3/2]"
                     />
                     <div className="absolute inset-0 ring-1 ring-inset ring-gray-200 rounded-lg pointer-events-none"/>
-                    {renderImageDeleteButton(image.id!)}
+                    {image.id && renderImageDeleteButton(image.id)}
                 </div>
             ))}
         </div>

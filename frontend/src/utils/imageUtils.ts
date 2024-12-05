@@ -3,7 +3,7 @@ export const getImageUrl = (imageUrl: string | undefined): string => {
         return imageUrl || '';
     }
 
-    const baseUrl = process.env.REACT_APP_API_URL || '';
+    const baseUrl = (import.meta.env.VITE_API_URL as string);
 
     try {
         const lastPartIndex = imageUrl.lastIndexOf('/');

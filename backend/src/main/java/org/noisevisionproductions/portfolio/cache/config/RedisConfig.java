@@ -1,4 +1,4 @@
-package org.noisevisionproductions.portfolio.config;
+package org.noisevisionproductions.portfolio.cache.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;

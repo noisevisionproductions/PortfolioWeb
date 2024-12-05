@@ -5,7 +5,7 @@ import {FormInput} from "@/components/shared/FormInput";
 import {ProjectImage} from "@/projects/types/project";
 
 interface ImageUploaderProps {
-    onImageAdd: (image: ProjectImage & { file?: File }) => void;
+    onImageAdd: (image: Omit<ProjectImage, 'id'> & { file?: File }) => void;
     t: (key: string) => string;
 }
 
@@ -33,7 +33,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({onImageAdd, t}) => 
     const handleAddImageWithCaption = () => {
         if (newImage.imageUrl) {
             onImageAdd({
-                id: Date.now(),
                 imageUrl: newImage.imageUrl,
                 caption: newImage.caption || '',
                 file: newImage.file

@@ -1,14 +1,16 @@
 package org.noisevisionproductions.portfolio.projectsManagement.service.mainProjectService;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
+import org.noisevisionproductions.portfolio.cache.service.project.ProjectCacheService;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.exceptions.FileStorageException;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
 import org.noisevisionproductions.portfolio.projectsManagement.repository.ProjectRepository;
 import org.noisevisionproductions.portfolio.projectsManagement.service.FileStorageService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,6 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ProjectService {
+    private static final Long ALL_PROJECTS_KEY = 0L;
+
     private final ProjectRepository projectRepository;
     private final FileStorageService fileStorageService;
     private final ProjectCacheService projectCacheService;
@@ -25,7 +29,16 @@ public class ProjectService {
     public Project createProject(ProjectDTO projectDTO) {
         Project project = projectMapper.toEntity(projectDTO);
         project = projectRepository.save(project);
-        projectCacheService.cacheProject(project);
+        if (project.getId() == null) {
+            throw new RuntimeException("Project ID was not generated");
+        }
+        Hibernate.initialize(project.getProjectImages());
+        Hibernate.initialize(project.getFeatures());
+        Hibernate.initialize(project.getTechnologies());
+        Hibernate.initialize(project.getContributors());
+
+        projectCacheService.cache(project.getId(), project);
+        projectCacheService.invalidate(ALL_PROJECTS_KEY);
         return project;
     }
 
@@ -34,44 +47,53 @@ public class ProjectService {
         projectMapper.updateProjectFromDTO(existingProject, projectDTO);
 
         Project updatedProject = projectRepository.save(existingProject);
-        projectCacheService.cacheProject(updatedProject);
+        projectCacheService.cache(id, updatedProject);
+        projectCacheService.invalidate(ALL_PROJECTS_KEY);
         return updatedProject;
     }
 
+    @Transactional(readOnly = true)
     public List<Project> getAllProjects() {
-        List<Project> cachedProjects = projectCacheService.getCachedAllProjects();
-        if (cachedProjects != null) {
-            return cachedProjects;
-        }
-
         List<Project> projects = projectRepository.findAll();
-        projectCacheService.cacheAllProjects(projects);
+        projects.forEach(project -> {
+            Hibernate.initialize(project.getProjectImages());
+            Hibernate.initialize(project.getFeatures());
+            Hibernate.initialize(project.getTechnologies());
+            Hibernate.initialize(project.getContributors());
+        });
         return projects;
     }
 
+    @Transactional(readOnly = true)
     public Project getProjectById(Long id) {
-        Project cachedProject = projectCacheService.getCachedProject(id);
+    /*    Project cachedProject = projectCacheService.get(id);
         if (cachedProject != null) {
             return cachedProject;
         }
-
+*/
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
 
-        projectCacheService.cacheProject(project);
+        projectCacheService.cache(id, project);
         return project;
     }
 
+    @Transactional(readOnly = true)
     public Project getProjectBySlug(String slug) {
-        Project cachedProject = projectCacheService.getCachedProjectBySlug(slug);
-        if (cachedProject != null) {
-            return cachedProject;
-        }
-
         Project project = projectRepository.findBySlug(slug)
                 .orElseThrow(() -> new RuntimeException("Project not found with slug: " + slug));
 
-        projectCacheService.cacheProject(project);
+    /*    Hibernate.initialize(project.getFeatures());
+        Hibernate.initialize(project.getTechnologies());
+        Hibernate.initialize(project.getContributors());
+        Hibernate.initialize(project.getProjectImages());*/
+
+    /*    Project cachedProject = projectCacheService.get(project.getId());
+        if (cachedProject != null) {
+            return cachedProject;
+        }*/
+
+        projectCacheService.cache(project.getId(), project);
         return project;
     }
 
@@ -87,14 +109,18 @@ public class ProjectService {
         });
 
         projectRepository.deleteById(id);
-        projectCacheService.invalidateCache(id);
+        projectCacheService.invalidate(id);
+        projectCacheService.invalidate(ALL_PROJECTS_KEY);
     }
 
     public Project updateFeatures(Long projectId, List<String> features) {
         Project project = getProjectById(projectId);
         project.setFeatures(features);
         Project updatedProject = projectRepository.save(project);
-        projectCacheService.cacheProject(updatedProject);
+
+        projectCacheService.cache(projectId, updatedProject);
+        projectCacheService.invalidate(ALL_PROJECTS_KEY);
+
         return updatedProject;
     }
 }

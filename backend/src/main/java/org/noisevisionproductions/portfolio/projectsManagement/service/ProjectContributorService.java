@@ -1,6 +1,7 @@
 package org.noisevisionproductions.portfolio.projectsManagement.service;
 
 import lombok.RequiredArgsConstructor;
+import org.noisevisionproductions.portfolio.cache.service.project.ProjectCacheService;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ContributorDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Contributor;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
@@ -16,6 +17,7 @@ public class ProjectContributorService {
 
     private final ProjectRepository projectRepository;
     private final ProjectService projectService;
+    private final ProjectCacheService projectCacheService;
 
     public Project addContributor(Long projectId, ContributorDTO contributorDTO) {
         Project project = projectService.getProjectById(projectId);
@@ -24,6 +26,10 @@ public class ProjectContributorService {
         contributor.setRole(contributorDTO.getRole());
         contributor.setProfileUrl(contributorDTO.getProfileUrl());
         project.getContributors().add(contributor);
-        return projectRepository.save(project);
+
+        Project updatedProject = projectRepository.save(project);
+        projectCacheService.cache(projectId, updatedProject);
+
+        return updatedProject;
     }
 }

@@ -15,6 +15,11 @@ export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({c
     const uploadProjectImage = async (projectId: number, imageFile: File) => {
         setLoading(true);
         try {
+            if (!projectId) {
+                throw new Error('Project ID is required for image upload');
+            }
+            console.log('Uploading image for project:', projectId);
+
             await imageService.uploadProjectImage(projectId, imageFile);
             await fetchProjects();
             setError(null);

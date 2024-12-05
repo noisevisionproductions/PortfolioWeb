@@ -8,6 +8,7 @@ import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects")
+@Transactional
 @Tag(name = "Projects", description = "API do zarządzania projektami i ich obrazami")
 public class ProjectController {
     private final ProjectMapper projectMapper;
@@ -26,6 +28,9 @@ public class ProjectController {
     @PreAuthorize("hasAuthority('CREATE_PROJECTS')")
     public ResponseEntity<ProjectDTO> createProject(@RequestBody ProjectDTO projectDTO) {
         Project created = projectService.createProject(projectDTO);
+        if (created.getId() == null) {
+            throw new RuntimeException("Project ID was not generated");
+        }
         return ResponseEntity.created(URI.create("/api/projects/" + created.getId()))
                 .body(projectMapper.toDTO(created));
     }

@@ -7,9 +7,10 @@ import {ProjectDetailsPage} from "./projects/components/projectDetails/ProjectDe
 import {RegisterPage} from "./auth/components/register/RegisterPage";
 import ProtectedLoginRoute from "./auth/components/login/ProtectedLoginRoute";
 import {MainContent} from "./App";
+import React from 'react';
 
 export const routes = (
-    <>
+    <React.Fragment>
         <Route path="/" element={<MainContent/>}/>
         <Route path="/login" element={<ProtectedLoginRoute/>}/>
         <Route path="/register" element={<RegisterPage/>}/>
@@ -30,5 +31,5 @@ export const routes = (
                    </ProtectedRoute>
                }
         />
-    </>
+    </React.Fragment>
 );

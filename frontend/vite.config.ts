@@ -33,7 +33,7 @@ export default defineConfig({
                 '**/test/**',
                 '**/coverage/**'
             ],
-            usePolling: false,
+            usePolling: true,
         },
         proxy: {
             '/api': {
@@ -41,6 +41,9 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: false
             }
+        },
+        hmr: {
+            overlay: false
         }
     }
 });

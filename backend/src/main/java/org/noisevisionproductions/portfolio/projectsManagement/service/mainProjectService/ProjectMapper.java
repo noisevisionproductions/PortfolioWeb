@@ -51,11 +51,6 @@ public class ProjectMapper {
         dto.setStartDate(project.getStartDate());
         dto.setEndDate(project.getEndDate());
 
-       /* Hibernate.initialize(project.getFeatures());
-        Hibernate.initialize(project.getTechnologies());
-        Hibernate.initialize(project.getContributors());
-        Hibernate.initialize(project.getProjectImages());*/
-
         dto.setFeatures(new ArrayList<>(project.getFeatures()));
         dto.setTechnologies(new ArrayList<>(project.getTechnologies()));
 

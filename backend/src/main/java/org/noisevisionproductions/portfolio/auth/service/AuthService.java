@@ -13,6 +13,7 @@ import org.noisevisionproductions.portfolio.auth.repository.UserRepository;
 import org.noisevisionproductions.portfolio.auth.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,16 +36,16 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest loginRequest) {
         try {
-            authenticationManager.authenticate(
+            Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.email(),
                             loginRequest.password()
                     )
             );
-            UserModel user = userRepository.findByEmail(loginRequest.email())
-                    .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
 
+            UserModel user = (UserModel) authentication.getPrincipal();
             String token = jwtService.generateToken(user);
+
             return new AuthResponse(
                     token,
                     user.getEmail(),

@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.4
+
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+WORKDIR /workspace/app
+
+# Użycie cache'u dla zależności Mavena
+RUN --mount=type=cache,target=/root/.m2 \
+    --mount=type=bind,source=pom.xml,target=pom.xml \
+    --mount=type=bind,source=mvnw,target=mvnw \
+    --mount=type=bind,source=.mvn,target=.mvn \
+    ./mvnw dependency:go-offline
+
+# Budowanie aplikacji z cache'm
+COPY . .
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw clean package -DskipTests
+
+FROM eclipse-temurin:21-jdk-alpine
+
+WORKDIR /workspace/app
+COPY --from=builder /workspace/app/ .
+
+CMD ["./mvnw", "spring-boot:run"]

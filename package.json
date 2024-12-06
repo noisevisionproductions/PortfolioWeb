@@ -1,19 +1,23 @@
 {
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.2",
-    "@radix-ui/react-slot": "^1.1.0",
-    "@types/react-router-dom": "^5.3.3",
+    "@radix-ui/react-slot": "^1.0.2",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-    "react-router-dom": "^7.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.0.2",
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",
-    "@testing-library/react": "^16.0.1",
+    "@testing-library/react": "^14.1.2",
     "@testing-library/react-hooks": "^7.0.2",
-    "concurrently": "^9.1.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/react-router-dom": "^5.3.3",
+    "concurrently": "^8.2.2",
     "vitest": "^2.1.5"
   }
 }

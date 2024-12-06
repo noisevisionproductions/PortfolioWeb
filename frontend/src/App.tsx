@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Header} from "./components/shared/Header";
 import {useTranslation} from "react-i18next";
 import {HeroSection} from "./components/landingPage/HeroSection";
@@ -80,43 +80,16 @@ export function MainContent() {
     );
 }
 
-function App() {
+const App: React.FC = () => {
     return (
-        <AuthProvider>
-            <ProjectProvider>
-                <Outlet/>
-            </ProjectProvider>
-        </AuthProvider>
+        <React.StrictMode>
+            <AuthProvider>
+                <ProjectProvider>
+                    <Outlet/>
+                </ProjectProvider>
+            </AuthProvider>
+        </React.StrictMode>
     );
 }
-
-/*function App() {
-    return (
-        <AuthProvider>
-            <ProjectProvider>
-                <Routes>
-                    {/!* Publiczne ścieżki *!/}
-                    <Route path="/" element={<MainContent/>}/>
-                    <Route path="/login" element={<ProtectedLoginRoute/>}/>
-                    <Route path="/register" element={<RegisterPage/>}/>
-                    <Route path="/project/:slug" element={<ProjectDetailsPage/>}/>
-                    <Route path="/unauthorized" element={<UnauthorizedPage/>}/>
-
-                    {/!* Ścieżki wymagająca konkretnych uprawnień *!/}
-                    <Route path="/add-project" element={
-                        <ProtectedRoute requiredAuthorities={[Authority.CREATE_PROJECTS]}>
-                            <ProjectFormPage/>
-                        </ProtectedRoute>
-                    }/>
-                    <Route path="/edit-project/:id" element={
-                        <ProtectedRoute requiredAuthorities={[Authority.EDIT_PROJECTS]}>
-                            <ProjectFormPage/>
-                        </ProtectedRoute>
-                    }/>
-                </Routes>
-            </ProjectProvider>
-        </AuthProvider>
-    );
-}*/
 
 export default App;

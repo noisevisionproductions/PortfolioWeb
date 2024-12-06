@@ -1,0 +1,24 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@10.8.2
+2 info using node@v18.20.5
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/app/.npmrc
+5 silly config load:file:/root/.npmrc
+6 silly config load:file:/usr/local/etc/npmrc
+7 verbose title npm run dev
+8 verbose argv "run" "dev"
+9 verbose logfile logs-max:10 dir:/app/.npm-cache/_logs/2024-12-06T18_01_49_435Z-
+10 verbose logfile /app/.npm-cache/_logs/2024-12-06T18_01_49_435Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET 200 https://registry.npmjs.org/npm 272ms
+13 verbose cwd /app
+14 verbose os Linux 5.15.133.1-microsoft-standard-WSL2
+15 verbose node v18.20.5
+16 verbose npm  v10.8.2
+17 notice
+17 notice New minor version of npm available! 10.8.2 -> 10.9.2
+17 notice Changelog: https://github.com/npm/cli/releases/tag/v10.9.2
+17 notice To update run: npm install -g npm@10.9.2
+17 notice  { force: true, [Symbol(proc-log.meta)]: true }
+18 verbose exit 0
+19 info ok

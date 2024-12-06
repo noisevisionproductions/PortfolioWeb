@@ -5,9 +5,9 @@ services:
     image: postgres:15-alpine
     container_name: portfolio-db
     environment:
-      - POSTGRES_DB=${PG_DB_NAME}
-      - POSTGRES_USER=${PG_USERNAME}
-      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -18,14 +18,14 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: backend/.docker/Dockerfile
     container_name: portfolio-backend
     depends_on:
       - postgres
     environment:
-      - SPRING_DATASOURCE_URL=${PG_URL_DOCKER}
-      - SPRING_DATASOURCE_USERNAME=${PG_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${PG_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
     ports:
       - "8080:8080"
@@ -35,7 +35,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: frontend/.docker/Dockerfile
     container_name: portfolio-frontend
     depends_on:
       - backend

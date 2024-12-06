@@ -2,18 +2,18 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-COPY package.json .
-COPY package-lock.json .
-COPY tsconfig.json .
-COPY vite.config.ts .
-COPY index.html .
-COPY postcss.config.js .
-COPY tailwind.config.js .
+COPY ../package.json .
+COPY ../package-lock.json .
+COPY ../tsconfig.json .
+COPY ../vite.config.ts .
+COPY ../index.html .
+COPY ../postcss.config.js .
+COPY ../tailwind.config.js .
 
 RUN npm ci
 
-COPY public/ ./public/
-COPY src/ ./src/
+COPY ../public ./public/
+COPY ../src ./src/
 
 RUN npm run build
 

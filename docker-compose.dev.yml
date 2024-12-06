@@ -1,44 +1,86 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PG_USERNAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     container_name: portfolio-db
     command:
       - "postgres"
       - "-c"
-      - "shared_buffers=256MB"
+      - "max_connections=200"
       - "-c"
-      - "work_mem=4MB"
+      - "shared_buffers=1GB"
       - "-c"
-      - "maintenance_work_mem=64MB"
+      - "work_mem=32MB"
+      - "-c"
+      - "maintenance_work_mem=256MB"
+      - "-c"
+      - "effective_cache_size=4GB"
+      - "-c"
+      - "synchronous_commit=off"
+      - "-c"
+      - "fsync=off"
+      - "-c"
+      - "full_page_writes=off"
+      - "-c"
+      - "checkpoint_timeout=1h"
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
     environment:
       - POSTGRES_DB=${PG_DB_NAME}
       - POSTGRES_USER=${PG_USERNAME}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - type: volume
+        source: postgres_data
+        target: /var/lib/postgresql/data
+        volume:
+          nocopy: true
     ports:
       - "5432:5432"
     networks:
       - portfolio-network
+
   redis:
-    image: redis:latest
+    image: redis:alpine
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     container_name: portfolio-redis
     ports:
       - "6379:6379"
     networks:
       - portfolio-network
+    command: >
+      redis-server 
+      --maxmemory 2gb 
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    tmpfs:
+      - /tmp
+      - /var/run/redis
 
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: .docker/Dockerfile.dev
+      args:
+        BUILDKIT_INLINE_CACHE: 1
     container_name: portfolio-backend-dev
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
+      - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
       - SPRING_DATASOURCE_URL=${PG_URL_DOCKER}
       - SPRING_DATASOURCE_USERNAME=${PG_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${PG_PASSWORD}
@@ -54,28 +96,44 @@ services:
       - backend_maven_cache:/root/.m2
     networks:
       - portfolio-network
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 2G
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: .docker/Dockerfile.dev
     container_name: portfolio-frontend-dev
     depends_on:
       - backend
     environment:
       - VITE_API_URL=http://localhost:8080
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - npm_cache:/app/.npm-cache
     networks:
       - portfolio-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
 
 networks:
   portfolio-network:
     driver: bridge
 
 volumes:
+  npm_cache:
   postgres_data:
   backend_maven_cache:

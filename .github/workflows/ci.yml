@@ -30,7 +30,7 @@ jobs:
 
       - name: Run tests with coverage
         working-directory: ./frontend
-        run: npm run coverage
+        run: npm run test:coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
@@ -51,6 +51,14 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'maven'
+
+      - name: Make Maven wrapper executable
+        working-directory: ./backend
+        run: chmod +x mvnw
+
+      - name: Run tests
+        working-directory: ./backend
+        run: ./mvnw clean test
 
       - name: Run tests with detailed output
         working-directory: ./backend
@@ -82,7 +90,5 @@ jobs:
       - name: Build frontend
         working-directory: ./frontend
         run: |
-          working-directory: ./frontend
-          run: |
           npm ci
           npm run build

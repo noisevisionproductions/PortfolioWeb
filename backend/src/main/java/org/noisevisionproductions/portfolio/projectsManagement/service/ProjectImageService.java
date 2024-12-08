@@ -27,17 +27,25 @@ public class ProjectImageService {
 
     public ImageFromProject addImageToProject(Long projectId, ProjectImageDTO projectImageDTO) {
         Project project = projectService.getProjectById(projectId);
+
         ImageFromProject image = new ImageFromProject();
         image.setImageUrl(projectImageDTO.getImageUrl());
         image.setCaption(projectImageDTO.getCaption());
         image.setProject(project);
+
         project.getProjectImages().add(image);
 
-        Project updatedProject = projectRepository.save(project);
+        Project savedProject = projectRepository.saveAndFlush(project);
 
-        projectCacheService.cache(projectId, updatedProject);
+        ImageFromProject savedImage = savedProject.getProjectImages()
+                .stream()
+                .filter(img -> img.getImageUrl().equals(projectImageDTO.getImageUrl()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Failed to save image"));
 
-        return image;
+        projectCacheService.cache(projectId, savedProject);
+
+        return savedImage;
     }
 
     public void removeImageFromProject(Long projectId, Long imageId) {

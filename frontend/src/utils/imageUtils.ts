@@ -1,9 +1,14 @@
+export const getBaseUrl = () => import.meta.env.VITE_API_URL as string;
+
 export const getImageUrl = (imageUrl: string | undefined): string => {
     if (!imageUrl || imageUrl.startsWith('http')) {
         return imageUrl || '';
     }
 
-    const baseUrl = (import.meta.env.VITE_API_URL as string);
+    const baseUrl = getBaseUrl();
+    if (!baseUrl) {
+        return imageUrl;
+    }
 
     try {
         const lastPartIndex = imageUrl.lastIndexOf('/');

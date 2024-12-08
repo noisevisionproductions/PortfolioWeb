@@ -24,9 +24,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    public void doFilterInternal(@NonNull HttpServletRequest request,
+                                 @NonNull HttpServletResponse response,
+                                 @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         if (shouldNotFilter(request)) {
             filterChain.doFilter(request, response);
@@ -66,7 +66,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+    public boolean shouldNotFilter(@NonNull HttpServletRequest request) {
         String path = request.getServletPath();
 
         if (path.startsWith("/api/projects") && request.getMethod().equals("GET")) {

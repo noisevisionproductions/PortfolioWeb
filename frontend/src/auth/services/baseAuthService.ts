@@ -10,12 +10,16 @@ const handleAuthError = (error: unknown) => {
         const responseData = error.response?.data;
 
         if (responseData && typeof responseData === 'object') {
-            if ('password' in responseData || 'email' in responseData) {
-                throw new ValidationError(responseData);
+            if ('errors' in responseData) {
+                throw new ValidationError(responseData.errors);
             }
 
             if ('type' in responseData) {
                 throw new AuthError(responseData.type, responseData.key);
+            }
+
+            if ('password' in responseData || 'email' in responseData) {
+                throw new ValidationError(responseData);
             }
         }
     }

@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.noisevisionproductions.portfolio.cache.model.base.CacheableEntity;
+import org.hibernate.Hibernate;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
 import org.noisevisionproductions.portfolio.projectsManagement.model.ProjectStatus;
-import org.springframework.beans.BeanUtils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CacheableProject implements CacheableEntity<Project> {
+public class CacheableProject implements Serializable {
     private Long id;
     private String name;
     private String slug;
@@ -34,41 +34,78 @@ public class CacheableProject implements CacheableEntity<Project> {
     private List<CacheableContributor> contributors = new ArrayList<>();
     private List<CacheableImage> images = new ArrayList<>();
 
-    @Override
     public Project toEntity() {
         Project project = new Project();
-        BeanUtils.copyProperties(this, project, "contributors", "images");
+        project.setId(this.getId());
+        project.setName(this.getName());
+        project.setSlug(this.getSlug());
+        project.setDescription(this.getDescription());
+        project.setRepositoryUrl(this.getRepositoryUrl());
+        project.setStatus(this.getStatus());
+        project.setStartDate(this.getStartDate());
+        project.setEndDate(this.getEndDate());
 
-        if (this.contributors != null) {
-            project.setContributors(this.contributors.stream()
-                    .map(CacheableContributor::toEntity)
-                    .collect(Collectors.toList()));
+        project.setFeatures(new ArrayList<>(this.getFeatures()));
+        project.setTechnologies(new ArrayList<>(this.getTechnologies()));
+
+        if (this.getContributors() != null) {
+            project.setContributors(
+                    this.getContributors().stream()
+                            .map(CacheableContributor::toEntity)
+                            .collect(Collectors.toList())
+            );
         }
 
-        if (this.images != null) {
-            project.setProjectImages(this.images.stream()
-                    .map(CacheableImage::toEntity)
-                    .collect(Collectors.toList()));
+        if (this.getImages() != null) {
+            project.setProjectImages(
+                    this.getImages().stream()
+                            .map(img -> img.toEntity())
+                            .collect(Collectors.toList())
+            );
         }
 
         return project;
     }
 
     public static CacheableProject fromProject(Project project) {
-        CacheableProject cacheableProject = new CacheableProject();
+        if (project == null) return null;
 
-        BeanUtils.copyProperties(project, cacheableProject, "contributors", "projectImages");
+        CacheableProject cacheableProject = new CacheableProject();
+        cacheableProject.setId(project.getId());
+        cacheableProject.setName(project.getName());
+        cacheableProject.setSlug(project.getSlug());
+        cacheableProject.setDescription(project.getDescription());
+        cacheableProject.setRepositoryUrl(project.getRepositoryUrl());
+        cacheableProject.setStatus(project.getStatus());
+        cacheableProject.setStartDate(project.getStartDate());
+        cacheableProject.setEndDate(project.getEndDate());
+
+        if (project.getFeatures() != null) {
+            Hibernate.initialize(project.getFeatures());
+            cacheableProject.setFeatures(new ArrayList<>(project.getFeatures()));
+        }
+
+        if (project.getTechnologies() != null) {
+            Hibernate.initialize(project.getTechnologies());
+            cacheableProject.setTechnologies(new ArrayList<>(project.getTechnologies()));
+        }
 
         if (project.getContributors() != null) {
-            cacheableProject.setContributors(project.getContributors().stream()
-                    .map(CacheableContributor::fromContributor)
-                    .collect(Collectors.toList()));
+            Hibernate.initialize(project.getContributors());
+            cacheableProject.setContributors(
+                    project.getContributors().stream()
+                            .map(CacheableContributor::fromContributor)
+                            .collect(Collectors.toList())
+            );
         }
 
         if (project.getProjectImages() != null) {
-            cacheableProject.setImages(project.getProjectImages().stream()
-                    .map(CacheableImage::fromImage)
-                    .collect(Collectors.toList()));
+            Hibernate.initialize(project.getProjectImages());
+            cacheableProject.setImages(
+                    project.getProjectImages().stream()
+                            .map(CacheableImage::fromImage)
+                            .collect(Collectors.toList())
+            );
         }
 
         return cacheableProject;

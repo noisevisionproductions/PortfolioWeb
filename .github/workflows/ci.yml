@@ -52,9 +52,18 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Run tests
+      - name: Run tests with detailed output
         working-directory: ./backend
-        run: ./mvnw clean test
+        run: |
+          ./mvnw clean test -Dtest.output.dir=./test-output
+
+      - name: Upload test results
+        if: always()  # This ensures reports are uploaded even if tests fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: backend/test-output/
+          retention-days: 7
 
   build:
     needs: [ frontend-tests, backend-tests ]

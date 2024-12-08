@@ -2,11 +2,11 @@ package org.noisevisionproductions.portfolio.projectsManagement.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectImageDTO;
-import org.noisevisionproductions.portfolio.projectsManagement.service.FileStorageService;
-import org.noisevisionproductions.portfolio.projectsManagement.service.mainProjectService.ProjectService;
 import org.noisevisionproductions.portfolio.projectsManagement.model.ImageFromProject;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
+import org.noisevisionproductions.portfolio.projectsManagement.service.FileStorageService;
 import org.noisevisionproductions.portfolio.projectsManagement.service.ProjectImageService;
+import org.noisevisionproductions.portfolio.projectsManagement.service.mainProjectService.ProjectService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -25,18 +25,24 @@ public class ProjectImageController {
 
     @PostMapping("/{projectId}/images")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
-    public ResponseEntity<ImageFromProject> addImageToProject(
+    public ResponseEntity<ProjectImageDTO> addImageToProject(
             @PathVariable Long projectId,
             @RequestBody ProjectImageDTO imageDTO
     ) {
         ImageFromProject added = projectImageService.addImageToProject(projectId, imageDTO);
+
+        ProjectImageDTO responseDTO = new ProjectImageDTO();
+        responseDTO.setId(added.getId());
+        responseDTO.setImageUrl(added.getImageUrl());
+        responseDTO.setCaption(added.getCaption());
+
         return ResponseEntity.created(URI.create("/api/projects/" + projectId + "/images/" + added.getId()))
-                .body(added);
+                .body(responseDTO);
     }
 
     @PostMapping("/{projectId}/images/upload")
     @PreAuthorize("hasAuthority('EDIT_PROJECTS')")
-    public ResponseEntity<ImageFromProject> uploadProjectImage(
+    public ResponseEntity<ProjectImageDTO> uploadProjectImage(
             @PathVariable Long projectId,
             @RequestParam("file") MultipartFile file
     ) {
@@ -58,8 +64,13 @@ public class ProjectImageController {
 
             ImageFromProject added = projectImageService.addImageToProject(projectId, imageDTO);
 
+            ProjectImageDTO responseDTO = new ProjectImageDTO();
+            responseDTO.setId(added.getId());
+            responseDTO.setImageUrl(added.getImageUrl());
+            responseDTO.setCaption(added.getCaption());
+
             return ResponseEntity.created(URI.create("/api/projects/" + projectId + "/images/" + added.getId()))
-                    .body(added);
+                    .body(responseDTO);
         } catch (Exception e) {
             throw new RuntimeException("Could not store file. Please try again!", e);
         }

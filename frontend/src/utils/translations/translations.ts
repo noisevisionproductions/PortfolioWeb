@@ -89,6 +89,7 @@ export const translations = {
             },
             projectSection: {
                 title: "Projekty",
+                noProjects: "Nie znaleziono projektów"
             },
             contactSection: {
                 contact: "Kontakt",
@@ -235,7 +236,8 @@ export const translations = {
                 description: "I specialize in creating Android and Web applications."
             },
             projectSection: {
-                title: "Projects"
+                title: "Projects",
+                noProjects: "No projects found"
             },
             contactSection: {
                 contact: "Contact",

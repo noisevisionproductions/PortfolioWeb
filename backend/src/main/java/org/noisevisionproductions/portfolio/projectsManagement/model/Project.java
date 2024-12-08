@@ -79,7 +79,7 @@ public class Project {
     )
     private List<Contributor> contributors = new ArrayList<>();
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<ImageFromProject> projectImages = new ArrayList<>();
 

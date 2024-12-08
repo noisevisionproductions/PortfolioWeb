@@ -2,6 +2,7 @@ package org.noisevisionproductions.portfolio.auth.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.noisevisionproductions.portfolio.auth.component.CustomAuthenticationProvider;
 import org.noisevisionproductions.portfolio.auth.dto.AuthResponse;
 import org.noisevisionproductions.portfolio.auth.dto.LoginRequest;
 import org.noisevisionproductions.portfolio.auth.dto.RegisterRequest;
@@ -11,7 +12,6 @@ import org.noisevisionproductions.portfolio.auth.exceptions.InvalidCredentialsEx
 import org.noisevisionproductions.portfolio.auth.model.UserModel;
 import org.noisevisionproductions.portfolio.auth.repository.UserRepository;
 import org.noisevisionproductions.portfolio.auth.security.JwtService;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -32,11 +32,11 @@ public class AuthService {
     private final JwtService jwtService;
     private final SuccessfulRegistrationService registrationService;
     private final HttpServletRequest request;
-    private final AuthenticationManager authenticationManager;
+    private final CustomAuthenticationProvider authenticationProvider;
 
     public AuthResponse login(LoginRequest loginRequest) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            Authentication authentication = authenticationProvider.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.email(),
                             loginRequest.password()

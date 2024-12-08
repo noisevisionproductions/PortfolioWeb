@@ -96,6 +96,18 @@ public class ProjectMapper {
         if (dto.getContributors() != null) {
             dto.getContributors().forEach(contributorDTO -> project.getContributors().add(contributorToEntity(contributorDTO)));
         }
+
+        if (dto.getProjectImages() != null) {
+            project.getProjectImages().clear();
+            dto.getProjectImages().forEach(imageDTO -> {
+                ImageFromProject image = new ImageFromProject();
+                image.setId(imageDTO.getId());
+                image.setImageUrl(imageDTO.getImageUrl());
+                image.setCaption(imageDTO.getCaption());
+                image.setProject(project);
+                project.getProjectImages().add(image);
+            });
+        }
     }
 
     private ContributorDTO contributorToDTO(Contributor contributor) {
@@ -126,6 +138,7 @@ public class ProjectMapper {
         if (image == null) return null;
 
         ProjectImageDTO dto = new ProjectImageDTO();
+        dto.setId(image.getId());
         dto.setImageUrl(image.getImageUrl());
         dto.setImageUrl(image.getImageUrl());
         dto.setCaption(image.getCaption());

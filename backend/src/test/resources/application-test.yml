@@ -15,10 +15,17 @@ spring:
   redis:
     host: localhost
     port: 6379
-  security:
+    database: 0
+    timeout: 60000
+    serializer: org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
+
+    security:
     user:
       name: test
       password: test
+
+file:
+  upload-dir: ./uploads
 
 application:
   security:

@@ -4,27 +4,35 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.noisevisionproductions.portfolio.cache.model.base.CacheableEntity;
 import org.noisevisionproductions.portfolio.projectsManagement.model.ImageFromProject;
-import org.springframework.beans.BeanUtils;
+
+import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CacheableImage implements CacheableEntity<ImageFromProject> {
+public class CacheableImage implements Serializable {
     private Long id;
     private String imageUrl;
     private String caption;
 
-    @Override
     public ImageFromProject toEntity() {
         ImageFromProject image = new ImageFromProject();
-        BeanUtils.copyProperties(this, image);
+        image.setId(id);
+        image.setImageUrl(imageUrl);
+        image.setCaption(caption);
+        image.setProject(image.getProject());
         return image;
     }
 
     public static CacheableImage fromImage(ImageFromProject image) {
-        return CacheableEntity.fromEntity(image, CacheableImage.class);
+        if (image == null) return null;
+
+        CacheableImage cacheable = new CacheableImage();
+        cacheable.setId(image.getId());
+        cacheable.setImageUrl(image.getImageUrl());
+        cacheable.setCaption(image.getCaption());
+        return cacheable;
     }
 }

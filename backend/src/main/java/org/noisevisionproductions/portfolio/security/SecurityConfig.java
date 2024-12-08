@@ -43,13 +43,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        // Zezwól tylko na GET dla projektów
                         .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers("/api/errors/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
-                        // Wszystkie inne operacje na projektach wymagają autoryzacji
-                        .requestMatchers("/api/projects/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/projects/**").hasAuthority("CREATE_PROJECTS")
+                        .requestMatchers(HttpMethod.PUT, "/api/projects/**").hasAuthority("EDIT_PROJECTS")
+                        .requestMatchers(HttpMethod.DELETE, "/api/projects/**").hasAuthority("DELETE_PROJECTS")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->

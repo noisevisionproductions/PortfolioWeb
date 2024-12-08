@@ -18,7 +18,7 @@ export function MainContent() {
     }, [fetchProjects]);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout | undefined;
+        let timer: ReturnType<typeof setTimeout> | undefined;
         if (isLoading) {
             timer = setTimeout(() => {
                 setShowTimeoutError(true);

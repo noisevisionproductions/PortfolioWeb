@@ -15,7 +15,11 @@ import java.util.Map;
 @RestControllerAdvice
 public class AuthExceptionHandler {
 
-    @ExceptionHandler(RuntimeException.class)
+    @ExceptionHandler({
+            IllegalArgumentException.class,
+            EmailAlreadyExistsException.class,
+            RegistrationBlockedException.class
+    })
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException exception) {
         String errorKey = mapErrorMessageToKey(exception.getMessage());
         ErrorResponse errorResponse = new ErrorResponse("error", errorKey);

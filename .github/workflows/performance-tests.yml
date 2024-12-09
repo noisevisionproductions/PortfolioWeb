@@ -23,10 +23,11 @@ jobs:
           distribution: 'temurin'
 
       - name: Run JMeter Tests
-        run: |
-          wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.5.tgz
-          tar -xzf apache-jmeter-5.5.tgz
-          ./apache-jmeter-5.5/bin/jmeter -n -t ./backend/src/test/jmeter/test-plan.jmx -l results.jtl
+        uses: rbhadti94/apache-jmeter-action@v0.7.0
+        with:
+          testFilePath: ./backend/src/test/jmeter/test-plan.jmx
+          outputReportsFolder: jmeter-reports/
+          args: ""
 
       - name: Upload Performance Results
         uses: actions/upload-artifact@v3

@@ -15,8 +15,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v3
@@ -25,28 +23,12 @@ jobs:
           distribution: 'temurin'
 
       - name: Run JMeter Tests
-        run: |
-          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz
-          tar -xzf apache-jmeter-5.6.2.tgz
-          
-          mkdir -p jmeter-results
-          
-          ./apache-jmeter-5.6.2/bin/jmeter -n \
-            -t backend/src/test/jmeter/test-plan.jmx \
-            -l jmeter-results/results.jtl \
-            -e -o jmeter-results/dashboard
-
-      - name: Generate Performance Summary
-        if: always()
-        run: |
-          echo "### Performance Test Results" >> $GITHUB_STEP_SUMMARY
-          if [ -f jmeter-results/results.jtl ]; then
-            echo "✅ Tests completed successfully" >> $GITHUB_STEP_SUMMARY
-            echo "📊 Results summary:" >> $GITHUB_STEP_SUMMARY
-            echo "- Total requests: $(wc -l < jmeter-results/results.jtl)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ No test results found" >> $GITHUB_STEP_SUMMARY
-          fi
+        uses: rbhadti94/apache-jmeter-action@v0.7.0
+        with:
+          testFilePath: backend/src/test/jmeter/test-plan.jmx
+          jmeterVersion: "5.6.2"
+          outputReportsFolder: "jmeter-results"
+          args: "-e -o jmeter-results/dashboard"
 
       - name: Upload Performance Results
         uses: actions/upload-artifact@v3
@@ -54,5 +36,5 @@ jobs:
         with:
           name: jmeter-results
           path: |
-            jmeter-results/results.jtl
-            jmeter-results/dashboard/
+            jmeter-results/
+            test-plan-execution.jtl

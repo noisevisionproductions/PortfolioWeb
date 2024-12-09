@@ -63,6 +63,7 @@ jobs:
       - name: Run tests with detailed output
         working-directory: ./backend
         run: |
+          mkdir -p test-output  # Utworzenie katalogu przed testami
           ./mvnw clean test -Dtest.output.dir=./test-output
 
       - name: Upload test results

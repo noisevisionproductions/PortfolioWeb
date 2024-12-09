@@ -1,0 +1,19 @@
+name: Performance Tests
+
+on:
+  workflow_run:
+    workflows: [ "Portfolio CI" ]
+    types: [ completed ]
+    branches: [ master ]
+
+jobs:
+  perfomance-tests:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run k6 Performance  Tests
+        uses: grafana/k6-action@v0.3.0
+        with:
+          filename: performance-tests/api-test.js

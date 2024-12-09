@@ -1,0 +1,47 @@
+name: Quality Checks
+
+on:
+  workflow_run:
+    workflows: [ "Portfolio CI" ]
+    types: [ completed ]
+    branches: [ master ]
+
+jobs:
+  quality:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Frontend
+      - name: Frontend Quality Checks
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm install @typescript-eslint/eslint-plugin eslint-plugin-sonarjs
+          npm run lint
+
+      # Backend
+      - name: Backend Quality Checks
+        working-directory: ./backend
+        run: |
+          ./mvnw checkstyle:check
+          ./mvnw pmd:check
+          ./mvnw spotbugs:check
+
+      # Raport
+      - name: Generate Quality Report
+        run: |
+          echo "# Quality Check Results" > quality-report.md
+          echo "## Frontend" >> quality-report.md
+          echo "ESLint results:" >> quality-report.md
+          npm run lint --silent || true >> quality-report.md
+          echo "## Backend" >> quality-report.md
+          echo "Checkstyle, PMD, and SpotBugs results:" >> quality-report.md
+          ./mvnw checkstyle:checkstyle-aggregate pmd:pmd spotbugs:spotbugs -DskipTests >> quality-report.md
+
+      - name: Upload Quality Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: quality-report
+          path: quality-report.md

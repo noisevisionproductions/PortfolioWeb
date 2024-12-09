@@ -1,0 +1,23 @@
+name: Documentation
+
+on:
+  workflow_run:
+    workflows: [ "Portfolio CI" ]
+    types: [ completed ]
+    branches: [ master ]
+
+jobs:
+  generate-docs:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate Swagger Documentation
+        working-directory: ./backend
+        run: ./mvnw springdoc:generate
+
+      - name: Deploy API Documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./backend/target/swagger-ui

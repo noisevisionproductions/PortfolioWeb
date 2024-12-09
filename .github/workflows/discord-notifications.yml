@@ -1,0 +1,21 @@
+name: Discord Notifications
+
+on:
+  workflow_run:
+    workflows: [ "Portfolio CI" ]
+    types: [ completed ]
+
+jobs:
+  discord-notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: |
+            🔔 Pipeline zakończony dla ${{ github.repository }}
+            Status: ${{ github.event.workflow_run.conclusion }}
+            Autor: ${{ github.actor }}
+            Zobacz szczegóły: ${{ github.event.workflow_run.html_url }}

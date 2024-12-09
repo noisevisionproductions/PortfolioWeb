@@ -8,8 +8,8 @@ on:
 
 jobs:
   generate-docs:
-    needs: [ build ]
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Generate Swagger Documentation

@@ -22,20 +22,33 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl wget unzip
+
+      - name: Setup JMeter
+        run: |
+          mkdir -p jmeter
+          cd jmeter
+          wget https://dlcdn.apache.org/jmeter/binaries/apache-jmeter-5.6.2.tgz
+          tar -xzf apache-jmeter-5.6.2.tgz
+          echo "JMETER_HOME=$PWD/apache-jmeter-5.6.2" >> $GITHUB_ENV
+          echo "$PWD/apache-jmeter-5.6.2/bin" >> $GITHUB_PATH
+
+      - name: Create results directory
+        run: mkdir -p jmeter-results
 
       - name: Run JMeter Tests
-        uses: rbhadti94/apache-jmeter-action@v0.7.0
-        with:
-          testFilePath: backend/src/test/jmeter/test-plan.jmx
-          jmeterVersion: "5.6.2"
-          outputReportsFolder: "jmeter-results"
-          args: "-e -o jmeter-results/dashboard"
+        run: |
+          jmeter -n \
+            -t backend/src/test/jmeter/test-plan.jmx \
+            -l jmeter-results/results.jtl \
+            -e -o jmeter-results/dashboard
 
       - name: Upload Performance Results
         uses: actions/upload-artifact@v3
         if: always()
         with:
           name: jmeter-results
-          path: |
-            jmeter-results/
-            test-plan-execution.jtl
+          path: jmeter-results/

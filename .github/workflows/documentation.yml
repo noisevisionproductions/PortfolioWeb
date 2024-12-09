@@ -28,6 +28,10 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Make Maven Wrapper executable
+        working-directory: ./backend
+        run: chmod +x mvnw
+
       - name: Generate Swagger Documentation
         working-directory: ./backend
         run: ./mvnw springdoc:generate

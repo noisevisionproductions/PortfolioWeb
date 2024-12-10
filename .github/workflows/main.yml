@@ -3,6 +3,8 @@ name: Portfolio CI
 on:
   push:
     branches: [ master ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ master ]
 
@@ -10,6 +12,15 @@ env:
   NODE_VERSION: '18'
   JAVA_VERSION: '21'
   APP_PORT: '9090'
+  MIN_COVERAGE: '80'
+  APP_STARTUP_TIMEOUT: '180'
+
+permissions:
+  contents: read
+  actions: write
+  checks: write
+  pull-requests: write
+  issues: write
 
 jobs:
   frontend-tests:
@@ -25,6 +36,16 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/node_modules
+            ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Dependency installation
         working-directory: ./frontend
         run: npm ci
@@ -33,10 +54,19 @@ jobs:
         working-directory: ./frontend
         run: npm run test:coverage
 
+      - name: Check coverage threshold
+        working-directory: ./frontend
+        run: |
+          COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+          if (( $(echo "$COVERAGE < ${{ env.MIN_COVERAGE }}" | bc -l) )); then
+            echo "Code coverage ($COVERAGE%) is below minimum threshold (${{ env.MIN_COVERAGE }}%)"
+            exit 1
+          fi
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         with:
-          name: coverage-report
+          name: frontend-coverage-${{ github.sha }}
           path: frontend/coverage/
           retention-days: 7
 
@@ -53,30 +83,63 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: Make Maven wrapper executable
         working-directory: ./backend
         run: chmod +x mvnw
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: ./backend
-        run: ./mvnw clean test
+        run: ./mvnw clean verify
 
-      - name: Run tests with detailed output
+      - name: Check coverage threshold
         working-directory: ./backend
         run: |
-          mkdir -p test-output  # Utworzenie katalogu przed testami
-          ./mvnw clean test -Dtest.output.dir=./test-output
+          COVERAGE=$(cat target/site/jacoco/index.html | grep -o 'Total[^%]*' | awk '{print $2}')
+          if (( $(echo "$COVERAGE < ${{ env.MIN_COVERAGE }}" | bc -l) )); then
+            echo "Code coverage ($COVERAGE%) is below minimum threshold (${{ env.MIN_COVERAGE }}%)"
+            exit 1
+          fi
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: test-results
-          path: backend/test-output/
+          name: backend-test-results-${{ github.sha }}
+          path: |
+            backend/target/surefire-reports/
+            backend/target/site/jacoco/
+          retention-days: 7
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'Portfolio'
+          path: '.'
+          format: 'HTML'
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report-${{ github.sha }}
+          path: reports
           retention-days: 7
 
   build:
-    needs: [ frontend-tests, backend-tests ]
+    needs: [ frontend-tests, backend-tests, security-scan ]
     runs-on: ubuntu-latest
 
     steps:
@@ -95,7 +158,25 @@ jobs:
           npm ci
           npm run build
 
+      - name: Java configuration
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
 
+      - name: Build backend
+        working-directory: ./backend
+        run: ./mvnw clean package -DskipTests
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts-${{ github.sha }}
+          path: |
+            frontend/dist
+            backend/target/*.jar
+          retention-days: 7
 
   prepare-backend:
     needs: [ build ]
@@ -106,12 +187,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Java configuration
-        uses: actions/setup-java@v3
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
         with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
-          cache: 'maven'
+          name: build-artifacts-${{ github.sha }}
 
       - name: Install required packages
         run: sudo apt-get install -y netcat-openbsd
@@ -131,21 +210,13 @@ jobs:
           server.port=${{ env.APP_PORT }}
           EOF
 
-      - name: Make Maven Wrapper executable
-        working-directory: ./backend
-        run: chmod +x mvnw
-
-      - name: Build Application
-        working-directory: ./backend
-        run: ./mvnw clean package -DskipTests
-
       - name: Start Spring Boot Application
         id: start_app
         working-directory: ./backend
         run: |
-          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=${{ env.APP_PORT }} &
+          nohup java -jar target/*.jar --server.port=${{ env.APP_PORT }} &
           echo "Waiting for application to start..."
-          if timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'; then
+          if timeout ${{ env.APP_STARTUP_TIMEOUT }} bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'; then
             echo "status=running" >> $GITHUB_OUTPUT
             echo "Application started successfully"
           else
@@ -154,13 +225,34 @@ jobs:
             exit 1
           fi
 
-      - name: Upload application state
-        if: success()
-        uses: actions/upload-artifact@v3
+      - name: Notify Slack on Failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
         with:
-          name: app-state
-          path: backend/target/
-          retention-days: 2
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  create-release:
+    needs: [ prepare-backend ]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts-${{ github.sha }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            frontend/dist/**
+            backend/target/*.jar
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   cleanup-backend:
     if: always()
@@ -170,7 +262,7 @@ jobs:
     steps:
       - name: Stop Spring Boot Application
         run: |
-          pkill -f 'spring-boot:run' || true
+          pkill -f '.jar' || true
           echo "Application stopped"
 
       - name: Cleanup files

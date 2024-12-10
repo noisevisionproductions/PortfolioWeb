@@ -9,6 +9,7 @@ on:
 env:
   NODE_VERSION: '18'
   JAVA_VERSION: '21'
+  APP_PORT: '9090'
 
 jobs:
   frontend-tests:
@@ -94,3 +95,83 @@ jobs:
           npm ci
           npm run build
 
+
+
+  prepare-backend:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    outputs:
+      app_status: ${{ steps.start_app.outputs.status }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Java configuration
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install required packages
+        run: sudo apt-get install -y netcat-openbsd
+
+      - name: Create key.properties
+        working-directory: ./backend/src/main/resources
+        run: |
+          mkdir -p $(dirname key.properties)
+          cat > key.properties << EOF
+          jwt.secret=${{ secrets.JWT_SECRET }}
+          jwt.expiration=${{ secrets.JWT_EXPIRATION }}
+          spring.datasource.url=${{ secrets.DB_URL }}
+          spring.datasource.username=${{ secrets.DB_USERNAME }}
+          spring.datasource.password=${{ secrets.DB_PASSWORD }}
+          spring.redis.host=${{ secrets.REDIS_HOST }}
+          spring.redis.port=${{ secrets.REDIS_PORT }}
+          server.port=${{ env.APP_PORT }}
+          EOF
+
+      - name: Make Maven Wrapper executable
+        working-directory: ./backend
+        run: chmod +x mvnw
+
+      - name: Build Application
+        working-directory: ./backend
+        run: ./mvnw clean package -DskipTests
+
+      - name: Start Spring Boot Application
+        id: start_app
+        working-directory: ./backend
+        run: |
+          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=${{ env.APP_PORT }} &
+          echo "Waiting for application to start..."
+          if timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'; then
+            echo "status=running" >> $GITHUB_OUTPUT
+            echo "Application started successfully"
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "Failed to start application"
+            exit 1
+          fi
+
+      - name: Upload application state
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-state
+          path: backend/target/
+          retention-days: 1
+
+  cleanup-backend:
+    if: always()
+    needs: [ prepare-backend ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Stop Spring Boot Application
+        run: |
+          pkill -f 'spring-boot:run' || true
+          echo "Application stopped"
+
+      - name: Cleanup files
+        run: |
+          rm -f ./backend/src/main/resources/key.properties

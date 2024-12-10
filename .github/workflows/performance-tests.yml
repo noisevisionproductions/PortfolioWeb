@@ -16,27 +16,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Java
-        uses: actions/setup-java@v3
+      - name: Download application state
+        uses: actions/download-artifact@v3
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          name: app-state
+          path: backend/target/
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl wget unzip
+          sudo apt-get install -y curl wget unzip netcat-openbsd
 
       - name: Setup JMeter
         run: |
           mkdir -p jmeter
           cd jmeter
-          # Próbujemy pobrać z różnych źródeł
           wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz || \
           wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.2.tgz || \
           curl -L -O https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz
           
-          # Sprawdzamy czy plik został pobrany
           if [ ! -f apache-jmeter-5.6.2.tgz ]; then
             echo "Failed to download JMeter"
             exit 1
@@ -47,11 +45,12 @@ jobs:
           echo "$PWD/apache-jmeter-5.6.2/bin" >> $GITHUB_PATH
 
       - name: Verify JMeter Installation
+        run: jmeter --version
+
+      - name: Wait for Application
         run: |
-          jmeter --version
-          if [ ! -d "backend/src/test/jmeter" ]; then
-            mkdir -p backend/src/test/jmeter
-          fi
+          echo "Waiting for application to be available..."
+          timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'
 
       - name: Create results directory
         run: mkdir -p jmeter-results
@@ -66,11 +65,57 @@ jobs:
           jmeter -n \
             -t backend/src/test/jmeter/test-plan.jmx \
             -l jmeter-results/results.jtl \
-            -e -o jmeter-results/dashboard
+            -j jmeter-results/jmeter.log \
+            -e -o jmeter-results/dashboard \
+            -Jhost=localhost \
+            -Jport=${{ env.APP_PORT }} \
+            -Jprotocol=http \
+            -Jthreads=10 \
+            -Jrampup=10 \
+            -Jduration=60
+
+      - name: Generate Report Summary
+        if: always()
+        run: |
+          echo "Performance Test Summary" > jmeter-results/summary.txt
+          echo "========================" >> jmeter-results/summary.txt
+          echo "Test Duration: 60 seconds" >> jmeter-results/summary.txt
+          echo "Number of Threads: 10" >> jmeter-results/summary.txt
+          if [ -f "jmeter-results/results.jtl" ]; then
+            echo "Test Results:" >> jmeter-results/summary.txt
+            awk -F',' '
+              NR>1 {
+                total++; 
+                if($4>=400) errors++
+              } 
+              END {
+                print "Total Requests: " total;
+                print "Error Rate: " (errors/total)*100 "%"
+              }' jmeter-results/results.jtl >> jmeter-results/summary.txt
+          fi
 
       - name: Upload Performance Results
         uses: actions/upload-artifact@v3
         if: always()
         with:
           name: jmeter-results
-          path: jmeter-results/
+          path: |
+            jmeter-results/
+            jmeter-results/dashboard/
+            jmeter-results/jmeter.log
+            jmeter-results/summary.txt
+
+      - name: Check Test Results
+        if: always()
+        run: |
+          if [ -f "jmeter-results/results.jtl" ]; then
+            error_count=$(awk -F',' 'NR>1 && $4>=400 {err++} END {print err}' jmeter-results/results.jtl)
+            total_count=$(awk -F',' 'NR>1 {total++} END {print total}' jmeter-results/results.jtl)
+            if [ $error_count -gt 0 ]; then
+              echo "Performance tests failed with $error_count errors out of $total_count requests"
+              exit 1
+            fi
+          else
+            echo "No test results found"
+            exit 1
+          fi

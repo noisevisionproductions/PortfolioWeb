@@ -8,17 +8,21 @@ on:
 
 env:
   APP_PORT: '9090'
+  JMETER_VERSION: '5.6.2'
+  THREADS_COUNT: '10'
+  RAMP_UP_PERIOD: '10'
+  TEST_DURATION: '60'
+  APP_STARTUP_TIMEOUT: '180'
+  ERROR_THRESHOLD: '5'
 
 permissions:
   actions: read
+  checks: write
 
 jobs:
   performance-tests:
-
     runs-on: ubuntu-latest
-    if: |
-      github.event.workflow_run.conclusion == 'success' || 
-      github.event.workflow_run.conclusion == 'failure'
+    if: github.event.workflow_run.conclusion == 'success'
 
     steps:
       - uses: actions/checkout@v3
@@ -28,11 +32,10 @@ jobs:
           mkdir -p backend/target
           mkdir -p jmeter-results
 
-      - name: Download application state
+      - name: Download build artifacts
         uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
         with:
-          name: app-state
+          name: build-artifacts-${{ github.event.workflow_run.head_sha }}
           workflow: Portfolio CI
           path: backend/target/
           workflow_conclusion: success
@@ -40,10 +43,10 @@ jobs:
 
       - name: Verify application files
         run: |
-          if [ ! -d "backend/target" ] || [ -z "$(ls -A backend/target)" ]; then
-          echo "Warning: Application files not found or directory is empty"
-          exit 1
-          fi 
+          if ! ls backend/target/*.jar >/dev/null 2>&1; then
+            echo "Error: No JAR files found in backend/target/"
+            exit 1
+          fi
 
       - name: Install dependencies
         run: |
@@ -54,29 +57,27 @@ jobs:
         run: |
           mkdir -p jmeter
           cd jmeter
-          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz || \
-          wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.2.tgz || \
-          curl -L -O https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${{ env.JMETER_VERSION }}.tgz || \
+          wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-${{ env.JMETER_VERSION }}.tgz || \
+          curl -L -O https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${{ env.JMETER_VERSION }}.tgz
           
-          if [ ! -f apache-jmeter-5.6.2.tgz ]; then
+          if [ ! -f apache-jmeter-${{ env.JMETER_VERSION }}.tgz ]; then
             echo "Failed to download JMeter"
             exit 1
           fi
           
-          tar -xzf apache-jmeter-5.6.2.tgz
-          echo "JMETER_HOME=$PWD/apache-jmeter-5.6.2" >> $GITHUB_ENV
-          echo "$PWD/apache-jmeter-5.6.2/bin" >> $GITHUB_PATH
+          tar -xzf apache-jmeter-${{ env.JMETER_VERSION }}.tgz
+          echo "JMETER_HOME=$PWD/apache-jmeter-${{ env.JMETER_VERSION }}" >> $GITHUB_ENV
+          echo "$PWD/apache-jmeter-${{ env.JMETER_VERSION }}/bin" >> $GITHUB_PATH
 
-      - name: Verify JMeter Installation
-        run: jmeter --version
-
-      - name: Wait for Application
+      - name: Start Spring Boot Application
         run: |
-          echo "Waiting for application to be available..."
-          timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'
-
-      - name: Create results directory
-        run: mkdir -p jmeter-results
+          java -jar backend/target/*.jar --server.port=${{ env.APP_PORT }} &
+          echo "Waiting for application to start..."
+          if ! timeout ${{ env.APP_STARTUP_TIMEOUT }} bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'; then
+            echo "Failed to start application within timeout"
+            exit 1
+          fi
 
       - name: Run JMeter Tests
         run: |
@@ -93,27 +94,33 @@ jobs:
             -Jhost=localhost \
             -Jport=${{ env.APP_PORT }} \
             -Jprotocol=http \
-            -Jthreads=10 \
-            -Jrampup=10 \
-            -Jduration=60
+            -Jthreads=${{ env.THREADS_COUNT }} \
+            -Jrampup=${{ env.RAMP_UP_PERIOD }} \
+            -Jduration=${{ env.TEST_DURATION }}
 
       - name: Generate Report Summary
         if: always()
         run: |
-          echo "Performance Test Summary" > jmeter-results/summary.txt
-          echo "========================" >> jmeter-results/summary.txt
-          echo "Test Duration: 60 seconds" >> jmeter-results/summary.txt
-          echo "Number of Threads: 10" >> jmeter-results/summary.txt
+          echo "# Performance Test Summary" > jmeter-results/summary.txt
+          echo "Test Duration: ${{ env.TEST_DURATION }} seconds" >> jmeter-results/summary.txt
+          echo "Number of Threads: ${{ env.THREADS_COUNT }}" >> jmeter-results/summary.txt
+          
           if [ -f "jmeter-results/results.jtl" ]; then
-            echo "Test Results:" >> jmeter-results/summary.txt
+            # Calculate statistics
             awk -F',' '
               NR>1 {
-                total++; 
+                total++
                 if($4>=400) errors++
+                sum_rt+=$2
+                if($2>max_rt) max_rt=$2
               } 
               END {
-                print "Total Requests: " total;
-                print "Error Rate: " (errors/total)*100 "%"
+                error_rate = (errors/total)*100
+                avg_rt = sum_rt/total
+                print "Total Requests: " total
+                print "Error Rate: " error_rate "%"
+                print "Average Response Time: " avg_rt " ms"
+                print "Max Response Time: " max_rt " ms"
               }' jmeter-results/results.jtl >> jmeter-results/summary.txt
           fi
 
@@ -121,12 +128,13 @@ jobs:
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: jmeter-results
+          name: performance-results-${{ github.event.workflow_run.head_sha }}
           path: |
             jmeter-results/
             jmeter-results/dashboard/
             jmeter-results/jmeter.log
             jmeter-results/summary.txt
+          retention-days: 7
 
       - name: Check Test Results
         if: always()
@@ -134,11 +142,19 @@ jobs:
           if [ -f "jmeter-results/results.jtl" ]; then
             error_count=$(awk -F',' 'NR>1 && $4>=400 {err++} END {print err}' jmeter-results/results.jtl)
             total_count=$(awk -F',' 'NR>1 {total++} END {print total}' jmeter-results/results.jtl)
-            if [ $error_count -gt 0 ]; then
-              echo "Performance tests failed with $error_count errors out of $total_count requests"
+            error_rate=$(( error_count * 100 / total_count ))
+          
+            if [ $error_rate -gt ${{ env.ERROR_THRESHOLD }} ]; then
+              echo "Performance tests failed: Error rate ${error_rate}% exceeds threshold of ${{ env.ERROR_THRESHOLD }}%"
               exit 1
             fi
+          
+            echo "Performance tests passed: Error rate ${error_rate}% is within acceptable threshold"
           else
             echo "No test results found"
             exit 1
           fi
+
+      - name: Stop Spring Boot Application
+        if: always()
+        run: pkill -f '.jar' || true

@@ -32,13 +32,19 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Download artifacts from main workflow
+      - name: Download build application
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: "Portfolio CI"
-          run_id: ${{ github.event.workflow_run.id }}
+          workflow_conclusion: success
           name: app-state
           path: backend/target/
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List downloaded files
+        run: |
+          echo "Contents of backend/target:"
+          ls -la backend/target/
 
       - name: Install netcat
         run: sudo apt-get install -y netcat-openbsd
@@ -47,18 +53,31 @@ jobs:
         working-directory: ./backend
         run: chmod +x mvnw
 
-      - name: Start Application
-        working-directory: ./backend
+      - name: Create ket.properties for CI/CD
+        working-directory: ./backend/src/main/resources
         run: |
-          nohup java -jar target/*.jar &
+          cat > key.properties << EOF
+          jwt.secret.key=${JWT_SECRET_KEY}
+          spring.datasource.url=${SPRING_DATASOURCE_URL}
+          spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+          spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+          server.port=${SERVER_PORT}
+          EOF
+
+      - name: Start Application
+        run: |
+          echo "Starting application..."
+          cd backend
+          nohup java -jar target/*.jar > app.log 2>&1 &
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'
           echo "Application started successfully"
+          cat app.log
 
       - name: Generate OpenAPI Documentation
         working-directory: ./backend
         run: |
-          sleep 10
+          sleep 15
           ./mvnw springdoc-openapi:generate \
             -Dspringdoc.api-docs.path=http://localhost:${{ env.APP_PORT }}/v3/api-docs \
             -Dspringdoc.swagger-ui.path=/swagger-ui.html

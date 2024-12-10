@@ -18,6 +18,8 @@ env:
 permissions:
   actions: read
   checks: write
+  contents: read
+  pull-requests: read
 
 jobs:
   performance-tests:

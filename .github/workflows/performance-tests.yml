@@ -15,9 +15,6 @@ jobs:
 
     env:
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_NAME: portfolio
       DB_USER: postgres
       DB_PASSWORD: postgres
       SERVER_PORT: 8080
@@ -68,8 +65,7 @@ jobs:
         run: |
           cat > key.properties << EOF
           jwt.secret.key=${JWT_SECRET_KEY}
-          # Use the full JDBC URL directly
-          spring.datasource.url=jdbc:postgresql://localhost:5432/portfolio
+          spring.datasource.url=${SPRING_DATASOURCE_URL}
           spring.datasource.username=${DB_USER}
           spring.datasource.password=${DB_PASSWORD}
           spring.datasource.driver-class-name=org.postgresql.Driver
@@ -77,14 +73,12 @@ jobs:
           spring.jpa.hibernate.ddl-auto=create-drop
           spring.jpa.show-sql=true
           spring.jpa.properties.hibernate.format_sql=true
-          spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+          server.port=${SERVER_PORT}
           EOF
 
       - name: Make Maven Wrapper executable
         working-directory: ./backend
-        run: |
-          chmod +x mvnw
-          ls -la mvnw
+        run: chmod +x mvnw
 
       - name: Build Application
         working-directory: ./backend
@@ -94,42 +88,10 @@ jobs:
             exit 1
           fi
 
-      - name: Create key.properties for CI/CD
-        working-directory: ./backend/src/main/resources
-        run: |
-          cat > key.properties << EOF
-          jwt.secret.key=${JWT_SECRET_KEY}
-          spring.datasource.url=${SPRING_DATASOURCE_URL}
-          spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
-          spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
-          server.port=${SERVER_PORT}
-          EOF
-
-      - name: Verify properties file creation
-        working-directory: ./backend/src/main/resources
-        run: |
-          echo "Checking if properties file exists:"
-          ls -la key.properties
-          echo "File contents (with sensitive data masked):"
-          sed 's/\(password=\).*/\1*****/g; s/\(secret.key=\).*/\1*****/g' key.properties
-
       - name: Start Spring Boot Application
         working-directory: ./backend
         run: |
-          echo "Content of key.properties:"
-          sed 's/password=.*/password=*****/' src/main/resources/key.properties
-          
-          nohup ./mvnw spring-boot:run \
-            -Dspring-boot.run.profiles=dev \
-            -Dspring.config.location=classpath:/key.properties \
-            -Dspring-boot.run.jvmArguments="\
-            -Djwt.secret.key=${JWT_SECRET_KEY} \
-            -Dspring.datasource.url=jdbc:postgresql://localhost:5432/portfolio \
-            -Dspring.datasource.username=${DB_USER} \
-            -Dspring.datasource.password=${DB_PASSWORD} \
-            -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \
-            -Dspring.jpa.hibernate.ddl-auto=create-drop" &
-          
+          nohup ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev &
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'
           echo "Application started"

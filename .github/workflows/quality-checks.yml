@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '20'  # Updated to Node.js 20 for react-router compatibility
   JAVA_VERSION: '21'
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Important for proper analysis
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -35,11 +35,12 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      # Frontend Quality Checks
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
           npm ci
-          npm install --save-dev install @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react eslint-plugin-sonarjs
+          npm install --save-dev eslint @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react eslint-plugin-sonarjs
 
       - name: Create ESLint Config if missing
         working-directory: ./frontend
@@ -67,23 +68,24 @@ jobs:
         working-directory: ./frontend
         run: |
           if ! grep -q '"lint"' package.json; then
-            sed -i '/"scripts": {/a \   "lint": "eslint . --ext .ts,.tsx",' package.json
+            sed -i '/"scripts": {/a \    "lint": "eslint . --ext .ts,.tsx",' package.json
           fi
 
       - name: Run Frontend Linting
         working-directory: ./frontend
-        continue-on-error: true
+        continue-on-error: true  # Don't fail the workflow on lint errors
         run: |
           echo "Running ESLint..."
           npm run lint || true
 
+      # Backend Quality Checks
       - name: Make Maven Wrapper executable
         working-directory: ./backend
         run: chmod +x mvnw
 
       - name: Run Backend Quality Checks
         working-directory: ./backend
-        continue-on-error: true
+        continue-on-error: true  # Don't fail the workflow on quality issues
         run: |
           echo "Running Checkstyle..."
           ./mvnw checkstyle:check || true
@@ -92,6 +94,7 @@ jobs:
           echo "Running SpotBugs..."
           ./mvnw spotbugs:check || true
 
+      # Generate Comprehensive Report
       - name: Generate Quality Report
         run: |
           echo "# Quality Check Results - $(date)" > quality-report.md
@@ -121,6 +124,7 @@ jobs:
           path: quality-report.md
           retention-days: 7
 
+      # Optional: Comment on PR with results summary
       - name: Create PR Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v6

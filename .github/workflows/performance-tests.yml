@@ -21,6 +21,7 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'maven'
 
       - name: Install dependencies
         run: |
@@ -40,18 +41,26 @@ jobs:
           spring.redis.port=${{ secrets.REDIS_PORT }}
           EOF
 
+      - name: Make Maven Wrapper executable
+        working-directory: ./backend
+        run: |
+          chmod +x mvnw
+          ls -la mvnw
+
       - name: Build Application
         working-directory: ./backend
-        run: ./mvnw clean package -DskipTests
+        run: |
+          if ! ./mvnw clean package -DskipTests; then
+            echo "Maven build failed"
+            exit 1
+          fi
 
       - name: Start Spring Boot Application
         working-directory: ./backend
         run: |
-          nohup ./mvnw spring-boot:run &
+          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8080 &
           echo "Waiting for application to start..."
-          while ! nc -z localhost 8080; do
-            sleep 2
-          done
+          timeout 60 bash -c 'while ! nc -z localhost 8080; do sleep 2; done' # Add timeout
           echo "Application started"
 
       - name: Setup JMeter

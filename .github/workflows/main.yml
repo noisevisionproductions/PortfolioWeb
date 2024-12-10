@@ -112,6 +112,11 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Make Maven Wrapper executable
+        run: |
+          chmod +x backend/mvnw
+          ls -la backend/mvnw
+
       - name: Install required packages
         run: sudo apt-get install -y netcat-openbsd
 

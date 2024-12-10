@@ -44,6 +44,7 @@ jobs:
           path: backend/target/
           workflow_conclusion: success
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          search_artifacts: true
 
       - name: Verify application files
         run: |

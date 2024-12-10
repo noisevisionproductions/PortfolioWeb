@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 env:
-  NODE_VERSION: '20'  # Updated to Node.js 20 for react-router compatibility
+  NODE_VERSION: '20'
   JAVA_VERSION: '21'
 
 jobs:
@@ -15,21 +15,21 @@ jobs:
     if: |
       github.event.workflow_run.conclusion == 'success' || 
       github.event.workflow_run.conclusion == 'failure'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Important for proper analysis
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: './frontend/package-lock.json'
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
@@ -73,7 +73,7 @@ jobs:
 
       - name: Run Frontend Linting
         working-directory: ./frontend
-        continue-on-error: true  # Don't fail the workflow on lint errors
+        continue-on-error: true
         run: |
           echo "Running ESLint..."
           npm run lint || true
@@ -85,7 +85,7 @@ jobs:
 
       - name: Run Backend Quality Checks
         working-directory: ./backend
-        continue-on-error: true  # Don't fail the workflow on quality issues
+        continue-on-error: true
         run: |
           echo "Running Checkstyle..."
           ./mvnw checkstyle:check || true
@@ -118,25 +118,9 @@ jobs:
           echo "Quality check completed at $(date)" >> quality-report.md
 
       - name: Upload Quality Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: quality-report
           path: quality-report.md
           retention-days: 7
-
-      # Optional: Comment on PR with results summary
-      - name: Create PR Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const report = fs.readFileSync('quality-report.md', 'utf8');
-            const summary = report.split('\n').slice(0, 20).join('\n'); // First 20 lines
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `Quality Check Summary:\n\n${summary}\n\n[See full report in Artifacts]`
-            });
+          compression-level: 9

@@ -135,35 +135,20 @@ jobs:
           server.port=${{ env.APP_PORT }}
           EOF
 
-      - name: Make Maven Wrapper executable
-        working-directory: ./backend
-        run: chmod +x mvnw
-
       - name: Build Application
         working-directory: ./backend
-        run: ./mvnw clean package -DskipTests
-
-      - name: Start Spring Boot Application
-        id: start_app
-        working-directory: ./backend
         run: |
-          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=${{ env.APP_PORT }} &
-          echo "Waiting for application to start..."
-          if timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'; then
-            echo "status=running" >> $GITHUB_OUTPUT
-            echo "Application started successfully"
-          else
-            echo "status=failed" >> $GITHUB_OUTPUT
-            echo "Failed to start application"
-            exit 1
-          fi
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
 
-      - name: Upload application state
-        if: success()
+      - name: Upload build JAR
         uses: actions/upload-artifact@v3
         with:
           name: app-state
-          path: backend/target/
+          path: |
+            backend/target/*.jar
+            backend/target/classes/
+            backend/target/generated-sources/
           retention-days: 2
 
   cleanup-backend:

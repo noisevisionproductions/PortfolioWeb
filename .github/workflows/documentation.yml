@@ -6,6 +6,9 @@ on:
     types: [ completed ]
     branches: [ master ]
 
+env:
+  APP_PORT: '9090'
+
 jobs:
   generate-docs:
     runs-on: ubuntu-latest
@@ -13,6 +16,7 @@ jobs:
     permissions:
       contents: write
       pages: write
+      actions: read
 
     if: |
       github.event.workflow_run.conclusion == 'success' || 
@@ -28,9 +32,11 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Download application state
-        uses: actions/download-artifact@v3
+      - name: Download artifacts from main workflow
+        uses: dawidd6/action-download-artifact@v2
         with:
+          workflow: "Portfolio CI"
+          run_id: ${{ github.event.workflow_run.id }}
           name: app-state
           path: backend/target/
 
@@ -41,16 +47,18 @@ jobs:
         working-directory: ./backend
         run: chmod +x mvnw
 
-      - name: Wait for Application
+      - name: Start Application
+        working-directory: ./backend
         run: |
-          echo "Waiting for application to be available..."
+          nohup java -jar target/*.jar &
+          echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'
-          echo "Application is available"
+          echo "Application started successfully"
 
       - name: Generate OpenAPI Documentation
         working-directory: ./backend
         run: |
-          sleep 5  # Dodatkowe opóźnienie dla pewności, że aplikacja jest w pełni gotowa
+          sleep 10
           ./mvnw springdoc-openapi:generate \
             -Dspringdoc.api-docs.path=http://localhost:${{ env.APP_PORT }}/v3/api-docs \
             -Dspringdoc.swagger-ui.path=/swagger-ui.html
@@ -83,3 +91,9 @@ jobs:
           name: api-documentation
           path: backend/target/swagger-ui
           retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: |
+          pkill -f 'java -jar' || true
+          echo "Application stopped"

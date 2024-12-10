@@ -69,9 +69,17 @@ jobs:
       - name: Start Spring Boot Application
         working-directory: ./backend
         run: |
-          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8080 &
+          nohup ./mvnw spring-boot:run \
+            -Dspring-boot.run.jvmArguments="-DJWT_SECRET_KEY=${JWT_SECRET_KEY} \
+            -DJWT_EXPIRATION=${JWT_EXPIRATION} \
+            -DSPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL} \
+            -DSPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME} \
+            -DSPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD} \
+            -DSPRING_REDIS_HOST=${SPRING_REDIS_HOST} \
+            -DSPRING_REDIS_PORT=${SPRING_REDIS_PORT} \
+            -DSERVER_PORT=${SERVER_PORT}" &
           echo "Waiting for application to start..."
-          timeout 60 bash -c 'while ! nc -z localhost 8080; do sleep 2; done' # Add timeout
+          timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'
           echo "Application started"
 
       - name: Setup JMeter

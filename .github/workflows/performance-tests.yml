@@ -15,23 +15,21 @@ jobs:
 
     env:
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
-      SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
-      SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: portfolio
+      DB_USER: postgres
+      DB_PASSWORD: postgres
       SERVER_PORT: 8080
-      SPRING_REDIS_HOST: localhost
-      SPRING_REDIS_PORT: 6379
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/portfolio"
 
-    services: # Add this section to spin up required services
+    services:
       postgres:
         image: postgres:latest
         env:
           POSTGRES_DB: portfolio
-          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
         options: >-
@@ -68,12 +66,18 @@ jobs:
       - name: Create key.properties for CI/CD
         working-directory: ./backend/src/main/resources
         run: |
-          cat > application.properties << EOF
+          cat > key.properties << EOF
           jwt.secret.key=${JWT_SECRET_KEY}
-          spring.datasource.url=${SPRING_DATASOURCE_URL}
-          spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
-          spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
-          server.port=${SERVER_PORT}
+          # Use the full JDBC URL directly
+          spring.datasource.url=jdbc:postgresql://localhost:5432/portfolio
+          spring.datasource.username=${DB_USER}
+          spring.datasource.password=${DB_PASSWORD}
+          spring.datasource.driver-class-name=org.postgresql.Driver
+          spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+          spring.jpa.hibernate.ddl-auto=create-drop
+          spring.jpa.show-sql=true
+          spring.jpa.properties.hibernate.format_sql=true
+          spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
           EOF
 
       - name: Make Maven Wrapper executable
@@ -112,14 +116,20 @@ jobs:
       - name: Start Spring Boot Application
         working-directory: ./backend
         run: |
+          echo "Content of key.properties:"
+          sed 's/password=.*/password=*****/' src/main/resources/key.properties
+          
           nohup ./mvnw spring-boot:run \
             -Dspring-boot.run.profiles=dev \
+            -Dspring.config.location=classpath:/key.properties \
             -Dspring-boot.run.jvmArguments="\
             -Djwt.secret.key=${JWT_SECRET_KEY} \
-            -Dspring.datasource.url=${SPRING_DATASOURCE_URL} \
-            -Dspring.datasource.username=${SPRING_DATASOURCE_USERNAME} \
-            -Dspring.datasource.password=${SPRING_DATASOURCE_PASSWORD} \
-            -Dserver.port=${SERVER_PORT}" &
+            -Dspring.datasource.url=jdbc:postgresql://localhost:5432/portfolio \
+            -Dspring.datasource.username=${DB_USER} \
+            -Dspring.datasource.password=${DB_PASSWORD} \
+            -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \
+            -Dspring.jpa.hibernate.ddl-auto=create-drop" &
+          
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'
           echo "Application started"

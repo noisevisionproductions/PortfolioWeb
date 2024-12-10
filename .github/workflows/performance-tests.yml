@@ -15,12 +15,9 @@ jobs:
 
     env:
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
       SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
       SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      SPRING_REDIS_HOST: ${{ secrets.REDIS_HOST }}
-      SPRING_REDIS_PORT: ${{ secrets.REDIS_PORT }}
       SERVER_PORT: 8080
 
     steps:
@@ -43,12 +40,9 @@ jobs:
         run: |
           cat > application.properties << EOF
           jwt.secret.key=${JWT_SECRET_KEY}
-          jwt.expiration=${JWT_EXPIRATION}
           spring.datasource.url=${SPRING_DATASOURCE_URL}
           spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
           spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
-          spring.redis.host=${SPRING_REDIS_HOST}
-          spring.redis.port=${SPRING_REDIS_PORT}
           server.port=${SERVER_PORT}
           EOF
 

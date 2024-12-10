@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ master ]
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 env:
   NODE_VERSION: '18'
   JAVA_VERSION: '21'
@@ -98,6 +103,10 @@ jobs:
   prepare-backend:
     needs: [ build ]
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      actions: write
 
     outputs:
       app_status: ${{ steps.start_app.outputs.status }}

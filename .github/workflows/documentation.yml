@@ -6,17 +6,18 @@ on:
     types: [ completed ]
     branches: [ master ]
 
+permissions:
+  contents: write
+  pages: write
+  actions: read
+  checks: read
+
 env:
   APP_PORT: '9090'
 
 jobs:
   generate-docs:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pages: write
-      actions: read
 
     if: |
       github.event.workflow_run.conclusion == 'success' || 
@@ -32,19 +33,23 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Download build application
+      - name: Download workflow artifact
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: "Portfolio CI"
-          workflow_conclusion: success
-          name: app-state
+          name: backend-artifacts
           path: backend/target/
+          workflow_conclusion: success
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          check_artifacts: true
+          search_artifacts: true
 
-      - name: List downloaded files
+      - name: Debug downloaded artifacts
         run: |
-          echo "Contents of backend/target:"
+          echo "Listing backend/target contents:"
           ls -la backend/target/
+          echo "Checking for JAR files:"
+          find backend/target -name "*.jar" -type f
 
       - name: Install netcat
         run: sudo apt-get install -y netcat-openbsd
@@ -53,9 +58,10 @@ jobs:
         working-directory: ./backend
         run: chmod +x mvnw
 
-      - name: Create ket.properties for CI/CD
+      - name: Create key.properties for CI/CD
         working-directory: ./backend/src/main/resources
         run: |
+          mkdir -p $(dirname key.properties)
           cat > key.properties << EOF
           jwt.secret.key=${JWT_SECRET_KEY}
           spring.datasource.url=${SPRING_DATASOURCE_URL}
@@ -68,7 +74,13 @@ jobs:
         run: |
           echo "Starting application..."
           cd backend
-          nohup java -jar target/*.jar > app.log 2>&1 &
+          JAR_FILE=$(find target -name "*.jar" -type f)
+          if [ -z "$JAR_FILE" ]; then
+            echo "No JAR file found!"
+            exit 1
+          fi
+          echo "Found JAR file: $JAR_FILE"
+          nohup java -jar "$JAR_FILE" > app.log 2>&1 &
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'
           echo "Application started successfully"

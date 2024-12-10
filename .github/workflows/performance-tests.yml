@@ -18,7 +18,36 @@ jobs:
       SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
       SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
       SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SERVER_PORT: 8080
+      SPRING_REDIS_HOST: localhost
+      SPRING_REDIS_PORT: 6379
+
+    services: # Add this section to spin up required services
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: portfolio
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v3
@@ -35,14 +64,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl wget unzip netcat-openbsd
 
-      - name: Create application.properties for CI/CD
+      - name: Create key.properties for CI/CD
         working-directory: ./backend/src/main/resources
         run: |
-          cat > application.properties << EOF
+          cat > key.properties << EOF
           jwt.secret.key=${JWT_SECRET_KEY}
           spring.datasource.url=${SPRING_DATASOURCE_URL}
           spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
           spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+          spring.datasource.driver-class-name=${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+          spring.jpa.database-platform=${SPRING_JPA_DATABASE_PLATFORM}
+          spring.jpa.hibernate.ddl-auto=update
+          spring.jpa.show-sql=true
+          spring.redis.host=${SPRING_REDIS_HOST}
+          spring.redis.port=${SPRING_REDIS_PORT}
           server.port=${SERVER_PORT}
           EOF
 
@@ -89,6 +124,11 @@ jobs:
             -Dspring.datasource.url=${SPRING_DATASOURCE_URL} \
             -Dspring.datasource.username=${SPRING_DATASOURCE_USERNAME} \
             -Dspring.datasource.password=${SPRING_DATASOURCE_PASSWORD} \
+            -Dspring.datasource.driver-class-name=${SPRING_DATASOURCE_DRIVER_CLASS_NAME} \
+            -Dspring.jpa.database-platform=${SPRING_JPA_DATABASE_PLATFORM} \
+            -Dspring.jpa.hibernate.ddl-auto=update \
+            -Dspring.redis.host=${SPRING_REDIS_HOST} \
+            -Dspring.redis.port=${SPRING_REDIS_PORT} \
             -Dserver.port=${SERVER_PORT}" &
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'

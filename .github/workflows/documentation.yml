@@ -32,13 +32,27 @@ jobs:
         working-directory: ./backend
         run: chmod +x mvnw
 
+      - name: Start Spring Boot Application
+        working-directory: ./backend
+        run: |
+          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=9090 &
+          echo "Waiting for application to start..."
+          while ! nc -z localhost 9090; do
+            sleep 2
+          done
+          echo "Application started"
+
       - name: Generate OpenAPI Documentation
         working-directory: ./backend
         run: |
-          ./mvnw clean compile
-          ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8080 & sleep 30
-          ./mvnw springdoc-openapi:generate
-          pkill -f 'spring-boot:run'
+          ./mvnw springdoc-openapi:generate -Dspringdoc.api-docs.path=http://localhost:9090/v3/api-docs
+          sleep 5
+
+      - name: Stop Spring Boot Application
+        if: always()
+        run: |
+          kill &(lsof -t -i:9090) || true
+          echo "Application stopped"
 
       - name: Deploy API Documentation
         uses: peaceiris/actions-gh-pages@v3

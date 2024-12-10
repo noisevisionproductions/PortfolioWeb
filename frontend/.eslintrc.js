@@ -13,7 +13,7 @@ module.exports = {
             version: 'detect'
         }
     },
-    extend: [
+    extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
         'plugin:react/recommended',
@@ -26,6 +26,11 @@ module.exports = {
         'react-hooks',
         'sonarjs'
     ],
+    env: {
+        browser: true,
+        es2020: true,
+        node: true
+    },
     rules: {
         'react/react-in-jsx-scope': 'off',
         '@typescript-eslint/explicit-module-boundary-types': 'off'

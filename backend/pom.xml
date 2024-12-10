@@ -228,18 +228,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.21.2</version>
-            </plugin>
-            <plugin>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.8.2.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.21.2</version>
                 <configuration>
-                    <targetJdk>17</targetJdk> 
+                    <targetJdk>17</targetJdk>
                     <printFailingErrors>true</printFailingErrors>
                     <failOnViolation>false</failOnViolation>
                     <includeTests>true</includeTests>
@@ -253,6 +243,11 @@
                         <ruleset>/category/java/performance.xml</ruleset>
                     </rulesets>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.8.2.0</version>
             </plugin>
         </plugins>
     </build>

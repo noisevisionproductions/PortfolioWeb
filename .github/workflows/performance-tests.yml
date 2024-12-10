@@ -36,6 +36,26 @@ jobs:
           mkdir -p backend/target
           mkdir -p jmeter-results
 
+      - name: Debug artifact info
+        run: |
+          echo "Workflow run id: ${{ github.event.workflow_run.id }}"
+          echo "Workflow run SHA: ${{ github.event.workflow_run.head_sha }}"
+          echo "Current SHA: ${{ github.sha }}"
+
+      - name: List available artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              run_id: context.payload.workflow_run.id
+            });
+            console.log('Available artifacts:');
+            for (const artifact of artifacts.data.artifacts) {
+              console.log(`${artifact.name} (${artifact.id})`);
+            }
+
       - name: Download build artifacts
         uses: dawidd6/action-download-artifact@v2
         with:

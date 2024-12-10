@@ -18,7 +18,9 @@ env:
 jobs:
   generate-docs:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    if: |
+      github.event.workflow_run.conclusion == 'success' || 
+      github.event.workflow_run.conclusion == 'failure'
 
     steps:
       - uses: actions/checkout@v3

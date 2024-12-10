@@ -16,21 +16,21 @@ jobs:
     env:
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
-      SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
-      SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SERVER_PORT: 8080
       SPRING_REDIS_HOST: localhost
       SPRING_REDIS_PORT: 6379
 
-    services: # Add this section to spin up required services
+    services:
       postgres:
         image: postgres:latest
         env:
           POSTGRES_DB: portfolio
-          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
         options: >-

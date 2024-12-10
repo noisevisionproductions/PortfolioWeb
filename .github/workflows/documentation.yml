@@ -32,9 +32,13 @@ jobs:
         working-directory: ./backend
         run: chmod +x mvnw
 
-      - name: Generate Swagger Documentation
+      - name: Generate OpenAPI Documentation
         working-directory: ./backend
-        run: ./mvnw springdoc:generate
+        run: |
+          ./mvnw clean compile
+          ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8080 & sleep 30
+          ./mvnw springdoc-openapi:generate
+          pkill -f 'spring-boot:run'
 
       - name: Deploy API Documentation
         uses: peaceiris/actions-gh-pages@v3

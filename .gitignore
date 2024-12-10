@@ -61,3 +61,6 @@ application-dev.properties
 ### IDE - VS Code ###
 .vscode/
 .env
+
+# Swagger documentation
+**/target/swaggerr-ui

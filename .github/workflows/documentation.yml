@@ -28,9 +28,17 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Debug Event
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow name: ${{ github.event.workflow_run.name }}"
+          echo "Branch: ${{ github.ref }}"
+
       - name: Create key.properties for CI/CD
         working-directory: ./backend/src/main/resources
         run: |
+          mkdir -p $(dirname key.properties)
           cat > key.properties << EOF
           jwt.secret=${{ secrets.JWT_SECRET }}
           jwt.expiration=${{ secrets.JWT_EXPIRATION }}
@@ -39,43 +47,40 @@ jobs:
           spring.datasource.password=${{ secrets.DB_PASSWORD }}
           spring.redis.host=${{ secrets.REDIS_HOST }}
           spring.redis.port=${{ secrets.REDIS_PORT }}
+          server.port=9090
           EOF
 
-          - name: Make Maven Wrapper executable
-            working-directory: ./backend
-            run: chmod +x mvnw
+      - name: Make Maven Wrapper executable
+        working-directory: ./backend
+        run: chmod +x mvnw
 
-          - name: Start Spring Boot Application
-            working-directory: ./backend
-            run: |
-              nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=9090 &
-              echo "Waiting for application to start..."
-              while ! nc -z localhost 9090; do
-                sleep 2
-              done
-              echo "Application started"
+      - name: Start Spring Boot Application
+        working-directory: ./backend
+        run: |
+          nohup ./mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=9090 &
+          echo "Waiting for application to start..."
+          timeout 60 bash -c 'while ! nc -z localhost 9090; do sleep 2; done'
+          echo "Application started"
 
-          - name: Generate OpenAPI Documentation
-            working-directory: ./backend
-            run: |
-              ./mvnw springdoc-openapi:generate -Dspringdoc.api-docs.path=http://localhost:9090/v3/api-docs
-              sleep 5
+      - name: Generate OpenAPI Documentation
+        working-directory: ./backend
+        run: |
+          sleep 10
+          ./mvnw springdoc-openapi:generate -Dspringdoc.api-docs.path=http://localhost:9090/v3/api-docs
 
-          - name: Stop Spring Boot Application
-            if: always()
-            run: |
-              kill &(lsof -t -i:9090) || true
-              echo "Application stopped"
+      - name: Stop Spring Boot Application
+        if: always()
+        run: |
+          pkill -f 'spring-boot:run' || true
+          echo "Application stopped"
 
-          - name: Deploy API Documentation
-            uses: peaceiris/actions-gh-pages@v3
-            with:
-              github_token: ${{ secrets.GITHUB_TOKEN }}
-              publish_dir: ./backend/target/swagger-ui
+      - name: Deploy API Documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./backend/target/swagger-ui
 
-          - name: Debug Event
-            run: |
-              echo "Event name: ${{ github.event_name }}"
-              echo "Workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
-              echo "Workflow name: ${{ github.event.workflow_run.name }}"
-              echo "Branch: ${{ github.ref }}"
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ./backend/src/main/resources/key.properties

@@ -16,9 +16,9 @@ env:
   ERROR_THRESHOLD: '5'
 
 permissions:
-  actions: read
-  checks: write
   contents: read
+  actions: write
+  checks: write
   pull-requests: read
 
 jobs:
@@ -31,39 +31,54 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Debug workflow information
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Workflow ID: ${{ github.event.workflow_run.id }}"
+          echo "Workflow name: ${{ github.event.workflow.name }}"
+          echo "Head SHA: ${{ github.event.workflow_run.head_sha }}"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
+
+      - name: List artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const repo = context.repo;
+            const runId = context.payload.workflow_run.id;
+            
+            console.log(`Checking artifacts for run ID ${runId}`);
+            
+            try {
+              const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: repo.owner,
+                repo: repo.repo,
+                run_id: runId
+              });
+            
+              console.log('Available artifacts:');
+              artifacts.forEach(artifact => {
+                console.log(`- ${artifact.name} (${artifact.id})`);
+              });
+            } catch (error) {
+              console.log('Error fetching artifacts:', error);
+              core.setFailed('Failed to fetch artifacts');
+            }
+
       - name: Create necessary directories
         run: |
           mkdir -p backend/target
           mkdir -p jmeter-results
 
-      - name: Debug artifact info
-        run: |
-          echo "Workflow run id: ${{ github.event.workflow_run.id }}"
-          echo "Workflow run SHA: ${{ github.event.workflow_run.head_sha }}"
-          echo "Current SHA: ${{ github.sha }}"
-
-      - name: List available artifacts
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.name,
-              run_id: context.payload.workflow_run.id
-            });
-            console.log('Available artifacts:');
-            for (const artifact of artifacts.data.artifacts) {
-              console.log(`${artifact.name} (${artifact.id})`);
-            }
-
       - name: Download build artifacts
         uses: dawidd6/action-download-artifact@v2
+        continue-on-error: true
         with:
-          name: build-artifacts-${{ github.event.workflow_run.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           workflow: Portfolio CI
+          name: build-artifacts-${{ github.event.workflow_run.head_sha }}
           path: backend/target/
           workflow_conclusion: success
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           search_artifacts: true
 
       - name: Verify application files

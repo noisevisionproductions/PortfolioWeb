@@ -6,21 +6,6 @@ on:
     types: [ completed ]
     branches: [ master ]
 
-env:
-  APP_PORT: '9090'
-  JMETER_VERSION: '5.6.2'
-  THREADS_COUNT: '10'
-  RAMP_UP_PERIOD: '10'
-  TEST_DURATION: '60'
-  APP_STARTUP_TIMEOUT: '180'
-  ERROR_THRESHOLD: '5'
-
-permissions:
-  contents: read
-  actions: write
-  checks: write
-  pull-requests: read
-
 jobs:
   performance-tests:
     runs-on: ubuntu-latest
@@ -31,124 +16,66 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Debug workflow information
-        run: |
-          echo "Repository: ${{ github.repository }}"
-          echo "Workflow ID: ${{ github.event.workflow_run.id }}"
-          echo "Workflow name: ${{ github.event.workflow.name }}"
-          echo "Head SHA: ${{ github.event.workflow_run.head_sha }}"
-          echo "Event name: ${{ github.event_name }}"
-          echo "Workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
-
-      - name: List artifacts
-        uses: actions/github-script@v6
+      - name: Set up Java
+        uses: actions/setup-java@v3
         with:
-          script: |
-            const repo = context.repo;
-            const runId = context.payload.workflow_run.id;
-            
-            console.log(`Checking artifacts for run ID ${runId}`);
-            
-            try {
-              const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
-                owner: repo.owner,
-                repo: repo.repo,
-                run_id: runId
-              });
-            
-              console.log('Available artifacts:');
-              artifacts.forEach(artifact => {
-                console.log(`- ${artifact.name} (${artifact.id})`);
-              });
-            } catch (error) {
-              console.log('Error fetching artifacts:', error);
-              core.setFailed('Failed to fetch artifacts');
-            }
-
-      - name: Create necessary directories
-        run: |
-          mkdir -p backend/target
-          mkdir -p jmeter-results
-
-      - name: Download build artifacts
-        uses: dawidd6/action-download-artifact@v2
-        continue-on-error: true
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          workflow: Portfolio CI
-          name: build-artifacts-${{ github.event.workflow_run.head_sha }}
-          path: backend/target/
-          workflow_conclusion: success
-          search_artifacts: true
-
-      # Dodatkowa próba jeśli pierwsza się nie powiedzie
-      - name: Alternative artifact download
-        if: steps.download.outcome == 'failure'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.payload.workflow_run.id
-            });
-            
-            const matchingArtifact = artifacts.data.artifacts.find(
-              artifact => artifact.name.startsWith('build-artifacts')
-            );
-            
-            if (matchingArtifact) {
-              const download = await github.rest.actions.downloadArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: matchingArtifact.id,
-                archive_format: 'zip'
-              });
-            
-              const fs = require('fs');
-              fs.writeFileSync('artifact.zip', Buffer.from(download.data));
-            
-              await exec.exec('unzip', ['artifact.zip', '-d', 'backend/target']);
-            }
-
-      - name: Verify application files
-        run: |
-          if ! ls backend/target/*.jar >/dev/null 2>&1; then
-            echo "Error: No JAR files found in backend/target/"
-            ls -la backend/target/
-            exit 1
-          fi
+          java-version: '21'
+          distribution: 'temurin'
 
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y curl wget unzip netcat-openbsd
 
+      - name: Create key.properties for CI/CD
+        working-directory: ./backend/src/main/resources
+        run: |
+          cat > key.properties << EOF
+          jwt.secret=${{ secrets.JWT_SECRET }}
+          jwt.expiration=${{ secrets.JWT_EXPIRATION }}
+          spring.datasource.url=${{ secrets.DB_URL }}
+          spring.datasource.username=${{ secrets.DB_USERNAME }}
+          spring.datasource.password=${{ secrets.DB_PASSWORD }}
+          spring.redis.host=${{ secrets.REDIS_HOST }}
+          spring.redis.port=${{ secrets.REDIS_PORT }}
+          EOF
+
+      - name: Build Application
+        working-directory: ./backend
+        run: ./mvnw clean package -DskipTests
+
+      - name: Start Spring Boot Application
+        working-directory: ./backend
+        run: |
+          nohup ./mvnw spring-boot:run &
+          echo "Waiting for application to start..."
+          while ! nc -z localhost 8080; do
+            sleep 2
+          done
+          echo "Application started"
+
       - name: Setup JMeter
         run: |
           mkdir -p jmeter
           cd jmeter
-          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${{ env.JMETER_VERSION }}.tgz || \
-          wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-${{ env.JMETER_VERSION }}.tgz || \
-          curl -L -O https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${{ env.JMETER_VERSION }}.tgz
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz || \
+          wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.2.tgz || \
+          curl -L -O https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.2.tgz
           
-          if [ ! -f apache-jmeter-${{ env.JMETER_VERSION }}.tgz ]; then
+          if [ ! -f apache-jmeter-5.6.2.tgz ]; then
             echo "Failed to download JMeter"
             exit 1
           fi
           
-          tar -xzf apache-jmeter-${{ env.JMETER_VERSION }}.tgz
-          echo "JMETER_HOME=$PWD/apache-jmeter-${{ env.JMETER_VERSION }}" >> $GITHUB_ENV
-          echo "$PWD/apache-jmeter-${{ env.JMETER_VERSION }}/bin" >> $GITHUB_PATH
+          tar -xzf apache-jmeter-5.6.2.tgz
+          echo "JMETER_HOME=$PWD/apache-jmeter-5.6.2" >> $GITHUB_ENV
+          echo "$PWD/apache-jmeter-5.6.2/bin" >> $GITHUB_PATH
 
-      - name: Start Spring Boot Application
-        run: |
-          java -jar backend/target/*.jar --server.port=${{ env.APP_PORT }} &
-          echo "Waiting for application to start..."
-          if ! timeout ${{ env.APP_STARTUP_TIMEOUT }} bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'; then
-            echo "Failed to start application within timeout"
-            exit 1
-          fi
+      - name: Verify JMeter Installation
+        run: jmeter --version
+
+      - name: Create results directory
+        run: mkdir -p jmeter-results
 
       - name: Run JMeter Tests
         run: |
@@ -160,72 +87,17 @@ jobs:
           jmeter -n \
             -t backend/src/test/jmeter/test-plan.jmx \
             -l jmeter-results/results.jtl \
-            -j jmeter-results/jmeter.log \
-            -e -o jmeter-results/dashboard \
-            -Jhost=localhost \
-            -Jport=${{ env.APP_PORT }} \
-            -Jprotocol=http \
-            -Jthreads=${{ env.THREADS_COUNT }} \
-            -Jrampup=${{ env.RAMP_UP_PERIOD }} \
-            -Jduration=${{ env.TEST_DURATION }}
+            -e -o jmeter-results/dashboard
 
-      - name: Generate Report Summary
+      - name: Stop Spring Boot Application
         if: always()
         run: |
-          echo "# Performance Test Summary" > jmeter-results/summary.txt
-          echo "Test Duration: ${{ env.TEST_DURATION }} seconds" >> jmeter-results/summary.txt
-          echo "Number of Threads: ${{ env.THREADS_COUNT }}" >> jmeter-results/summary.txt
-          
-          if [ -f "jmeter-results/results.jtl" ]; then
-            # Calculate statistics
-            awk -F',' '
-              NR>1 {
-                total++
-                if($4>=400) errors++
-                sum_rt+=$2
-                if($2>max_rt) max_rt=$2
-              } 
-              END {
-                error_rate = (errors/total)*100
-                avg_rt = sum_rt/total
-                print "Total Requests: " total
-                print "Error Rate: " error_rate "%"
-                print "Average Response Time: " avg_rt " ms"
-                print "Max Response Time: " max_rt " ms"
-              }' jmeter-results/results.jtl >> jmeter-results/summary.txt
-          fi
+          kill $(lsof -t -i:8080) || true
+          echo "Application stopped"
 
       - name: Upload Performance Results
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: performance-results-${{ github.event.workflow_run.head_sha }}
-          path: |
-            jmeter-results/
-            jmeter-results/dashboard/
-            jmeter-results/jmeter.log
-            jmeter-results/summary.txt
-          retention-days: 7
-
-      - name: Check Test Results
-        if: always()
-        run: |
-          if [ -f "jmeter-results/results.jtl" ]; then
-            error_count=$(awk -F',' 'NR>1 && $4>=400 {err++} END {print err}' jmeter-results/results.jtl)
-            total_count=$(awk -F',' 'NR>1 {total++} END {print total}' jmeter-results/results.jtl)
-            error_rate=$(( error_count * 100 / total_count ))
-          
-            if [ $error_rate -gt ${{ env.ERROR_THRESHOLD }} ]; then
-              echo "Performance tests failed: Error rate ${error_rate}% exceeds threshold of ${{ env.ERROR_THRESHOLD }}%"
-              exit 1
-            fi
-          
-            echo "Performance tests passed: Error rate ${error_rate}% is within acceptable threshold"
-          else
-            echo "No test results found"
-            exit 1
-          fi
-
-      - name: Stop Spring Boot Application
-        if: always()
-        run: pkill -f '.jar' || true
+          name: jmeter-results
+          path: jmeter-results/

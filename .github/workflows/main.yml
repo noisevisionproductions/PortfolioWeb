@@ -155,11 +155,12 @@ jobs:
           fi
 
       - name: Upload application state
+        if: success()
         uses: actions/upload-artifact@v3
         with:
           name: app-state
           path: backend/target/
-          retention-days: 1
+          retention-days: 2
 
   cleanup-backend:
     if: always()

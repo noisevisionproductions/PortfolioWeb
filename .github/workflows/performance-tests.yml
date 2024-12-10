@@ -15,20 +15,23 @@ jobs:
 
     env:
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_NAME: portfolio
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: ${{ secrets.DB_URL }}
+      SPRING_DATASOURCE_USERNAME: ${{ secrets.DB_USERNAME }}
+      SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SERVER_PORT: 8080
+      SPRING_REDIS_HOST: localhost
+      SPRING_REDIS_PORT: 6379
 
-    services:
+    services: # Add this section to spin up required services
       postgres:
         image: postgres:latest
         env:
           POSTGRES_DB: portfolio
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -65,21 +68,13 @@ jobs:
       - name: Create key.properties for CI/CD
         working-directory: ./backend/src/main/resources
         run: |
-          cat > key.properties << EOF
+          cat > application.properties << EOF
           jwt.secret.key=${JWT_SECRET_KEY}
-          spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-          spring.datasource.username=${DB_USER}
-          spring.datasource.password=${DB_PASSWORD}
-          spring.datasource.driver-class-name=org.postgresql.Driver
-          spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
-          spring.jpa.hibernate.ddl-auto=create-drop
-          spring.jpa.show-sql=true
-          logging.level.org.springframework=DEBUG
-          logging.level.org.hibernate.SQL=DEBUG
+          spring.datasource.url=${SPRING_DATASOURCE_URL}
+          spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+          spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+          server.port=${SERVER_PORT}
           EOF
-          
-          echo "Verifying key.properties content (sensitive data masked):"
-          sed 's/password=.*/password=*****/' key.properties
 
       - name: Make Maven Wrapper executable
         working-directory: ./backend
@@ -119,18 +114,15 @@ jobs:
         run: |
           nohup ./mvnw spring-boot:run \
             -Dspring-boot.run.profiles=dev \
-            -Dspring.config.location=classpath:/key.properties \
-            -X &
+            -Dspring-boot.run.jvmArguments="\
+            -Djwt.secret.key=${JWT_SECRET_KEY} \
+            -Dspring.datasource.url=${SPRING_DATASOURCE_URL} \
+            -Dspring.datasource.username=${SPRING_DATASOURCE_USERNAME} \
+            -Dspring.datasource.password=${SPRING_DATASOURCE_PASSWORD} \
+            -Dserver.port=${SERVER_PORT}" &
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'
           echo "Application started"
-
-      - name: Verify Database Connection
-        run: |
-          echo "Verifying PostgreSQL connection..."
-          PGPASSWORD=postgres psql -h localhost -U postgres -d portfolio -c "\l" || true
-          echo "Checking if PostgreSQL is accepting connections..."
-          nc -zv localhost 5432
 
       - name: Setup JMeter
         run: |

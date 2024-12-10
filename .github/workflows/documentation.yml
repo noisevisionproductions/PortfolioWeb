@@ -2,17 +2,20 @@ name: Documentation
 
 on:
   workflow_run:
-    workflows: [ "Portfolio CI" ]
-    types: [ completed ]
-    branches: [ master ]
+    workflows: ["Portfolio CI"]
+    types: [completed]
+    branches: [master]
 
 permissions:
   contents: write
   pages: write
+  id-token: write
   actions: read
   checks: read
 
 env:
+  NODE_VERSION: '18'
+  JAVA_VERSION: '21'
   APP_PORT: '9090'
 
 jobs:
@@ -27,98 +30,153 @@ jobs:
         with:
           repository: ${{ github.event.workflow_run.head_repository.full_name }}
           ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          java-version: '21'
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'maven'
 
-      # Create target directory
-      - name: Create target directory
-        run: mkdir -p backend/target
-
-      # Download JAR artifact
-      - name: Download JAR
-        uses: actions/download-artifact@v3
+      - name: Download artifacts from Portfolio CI
+        uses: dawidd6/action-download-artifact@v2
         with:
-          name: backend-jar
+          workflow: "Portfolio CI"
+          run_id: ${{ github.event.workflow_run.id }}
+          name: app-state
           path: backend/target
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
 
-      # Download other build files
-      - name: Download build files
-        uses: actions/download-artifact@v3
-        with:
-          name: backend-files
-          path: backend/target
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Debug artifacts
+      - name: Verify artifacts
         run: |
-          echo "Workflow run ID: ${{ github.event.workflow_run.id }}"
-          echo "Repository: ${{ github.event.workflow_run.head_repository.full_name }}"
-          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Listing target directory:"
-          ls -la backend/target/
+          if [ ! -d "backend/target" ]; then
+            echo "Target directory not found!"
+            exit 1
+          fi
+          JAR_COUNT=$(find backend/target -name "*.jar" -type f | wc -l)
+          if [ "$JAR_COUNT" -eq 0 ]; then
+            echo "No JAR files found in target directory!"
+            exit 1
+          fi
+          echo "Found $JAR_COUNT JAR file(s)"
 
-      - name: Install netcat
-        run: sudo apt-get install -y netcat-openbsd
+      - name: Install required packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y netcat-openbsd curl
 
       - name: Make Maven Wrapper executable
         working-directory: ./backend
-        run: chmod +x mvnw
+        run: |
+          chmod +x mvnw
+          ls -la mvnw
 
-      - name: Create key.properties
+      - name: Create application properties
         working-directory: ./backend/src/main/resources
         run: |
-          mkdir -p $(dirname key.properties)
-          cat > key.properties << EOF
-          jwt.secret=${{ secrets.JWT_SECRET }}
-          spring.datasource.url=${{ secrets.DB_URL }}
-          spring.datasource.username=${{ secrets.DB_USERNAME }}
-          spring.datasource.password=${{ secrets.DB_PASSWORD }}
+          mkdir -p $(dirname application-docs.properties)
+          cat > application-docs.properties << EOF
           server.port=${{ env.APP_PORT }}
+          spring.profiles.active=docs
+          springdoc.swagger-ui.path=/swagger-ui.html
+          springdoc.api-docs.path=/v3/api-docs
           EOF
 
       - name: Start Application
+        working-directory: ./backend
         run: |
           echo "Starting application..."
-          cd backend
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
-          if [ -z "$JAR_FILE" ]; then
-            echo "No JAR file found!"
-            exit 1
-          fi
-          echo "Found JAR file: $JAR_FILE"
-          nohup java -jar "$JAR_FILE" > app.log 2>&1 &
-          echo "Waiting for application to start..."
-          timeout 60 bash -c 'while ! nc -z localhost ${{ env.APP_PORT }}; do sleep 2; done'
-          echo "Application started successfully"
-          cat app.log
+          echo "Using JAR file: $JAR_FILE"
+          nohup java -jar "$JAR_FILE" \
+            --spring.config.location=classpath:/application-docs.properties \
+            > app.log 2>&1 &
+          
+          echo "Waiting for application to start (max 60 seconds)..."
+          for i in {1..30}; do
+            if nc -z localhost ${{ env.APP_PORT }}; then
+              echo "Application started successfully"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Application failed to start within timeout"
+              cat app.log
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Verify API availability
+        run: |
+          echo "Verifying API docs endpoint..."
+          for i in {1..5}; do
+            if curl -s -f "http://localhost:${{ env.APP_PORT }}/v3/api-docs" > /dev/null; then
+              echo "API documentation endpoint is accessible"
+              break
+            fi
+            if [ $i -eq 5 ]; then
+              echo "API documentation endpoint is not accessible"
+              cat backend/app.log
+              exit 1
+            fi
+            sleep 3
+          done
 
       - name: Generate OpenAPI Documentation
         working-directory: ./backend
         run: |
-          sleep 15
           ./mvnw springdoc-openapi:generate \
             -Dspringdoc.api-docs.path=http://localhost:${{ env.APP_PORT }}/v3/api-docs \
-            -Dspringdoc.swagger-ui.path=/swagger-ui.html
+            -Dspringdoc.swagger-ui.path=/swagger-ui.html \
+            -Dspringdoc.outputFileName=openapi.json \
+            -Dspringdoc.outputDir=target/swagger-ui
 
-      - name: Deploy API Documentation
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Generate static documentation
+        working-directory: ./backend/target/swagger-ui
+        run: |
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>API Documentation</title>
+              <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+              <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+            </head>
+            <body>
+              <div id="swagger-ui"></div>
+              <script>
+                window.onload = () => {
+                  SwaggerUIBundle({
+                    url: "openapi.json",
+                    dom_id: '#swagger-ui',
+                    deepLinking: true,
+                    presets: [
+                      SwaggerUIBundle.presets.apis,
+                      SwaggerUIBundle.SwaggerUIStandalonePreset
+                    ],
+                  });
+                };
+              </script>
+            </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./backend/target/swagger-ui
-          destination_dir: docs
-          commit_message: "docs: update API documentation"
+          path: backend/target/swagger-ui
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Documentation Artifact
-        uses: actions/upload-artifact@v3
         if: always()
+        uses: actions/upload-artifact@v3
         with:
           name: api-documentation
           path: backend/target/swagger-ui

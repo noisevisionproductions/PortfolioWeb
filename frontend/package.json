@@ -25,6 +25,11 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "eslint": "^9.16.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-sonarjs": "^3.0.1",
     "@shadcn/ui": "^0.0.4",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",

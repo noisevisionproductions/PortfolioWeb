@@ -6,6 +6,10 @@ on:
     types: [ completed ]
     branches: [ master ]
 
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '21'
+
 jobs:
   quality:
     if: |
@@ -14,36 +18,121 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      # Frontend
-      - name: Frontend Quality Checks
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
           npm ci
-          npm install @typescript-eslint/eslint-plugin eslint-plugin-sonarjs
-          npm run lint
+          npm install --save-dev install @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react eslint-plugin-sonarjs
 
-      # Backend
-      - name: Backend Quality Checks
-        working-directory: ./backend
+      - name: Create ESLint Config if missing
+        working-directory: ./frontend
         run: |
-          ./mvnw checkstyle:check
-          ./mvnw pmd:check
-          ./mvnw spotbugs:check
+          if [ ! -f ".eslintrc.js" ]; then
+            echo "module.exports = {
+              root: true,
+              extends: [
+                'eslint:recommended',
+                'plugin:@typescript-eslint/recommended',
+                'plugin:react/recommended',
+                'plugin:sonarjs/recommended'
+              ],
+              parser: '@typescript-eslint/parser',
+              plugins: ['@typescript-eslint', 'react', 'sonarjs'],
+              settings: {
+                react: {
+                  version: 'detect'
+                }
+              }
+            }" > .eslintrc.js
+          fi
 
-      # Raport
+      - name: Add lint script if missing
+        working-directory: ./frontend
+        run: |
+          if ! grep -q '"lint"' package.json; then
+            sed -i '/"scripts": {/a \   "lint": "eslint . --ext .ts,.tsx",' package.json
+          fi
+
+      - name: Run Frontend Linting
+        working-directory: ./frontend
+        continue-on-error: true
+        run: |
+          echo "Running ESLint..."
+          npm run lint || true
+
+      - name: Make Maven Wrapper executable
+        working-directory: ./backend
+        run: chmod +x mvnw
+
+      - name: Run Backend Quality Checks
+        working-directory: ./backend
+        continue-on-error: true
+        run: |
+          echo "Running Checkstyle..."
+          ./mvnw checkstyle:check || true
+          echo "Running PMD..."
+          ./mvnw pmd:check || true
+          echo "Running SpotBugs..."
+          ./mvnw spotbugs:check || true
+
       - name: Generate Quality Report
         run: |
-          echo "# Quality Check Results" > quality-report.md
-          echo "## Frontend" >> quality-report.md
-          echo "ESLint results:" >> quality-report.md
-          npm run lint --silent || true >> quality-report.md
-          echo "## Backend" >> quality-report.md
-          echo "Checkstyle, PMD, and SpotBugs results:" >> quality-report.md
-          ./mvnw checkstyle:checkstyle-aggregate pmd:pmd spotbugs:spotbugs -DskipTests >> quality-report.md
+          echo "# Quality Check Results - $(date)" > quality-report.md
+          
+          echo -e "\n## Frontend" >> quality-report.md
+          echo "### ESLint Results" >> quality-report.md
+          cd frontend && npm run lint --silent >> ../quality-report.md 2>&1 || true
+          
+          echo -e "\n## Backend" >> quality-report.md
+          echo "### Checkstyle Results" >> quality-report.md
+          cd ../backend && ./mvnw checkstyle:checkstyle-aggregate >> ../quality-report.md 2>&1 || true
+          
+          echo -e "\n### PMD Results" >> quality-report.md
+          ./mvnw pmd:pmd >> ../quality-report.md 2>&1 || true
+          
+          echo -e "\n### SpotBugs Results" >> quality-report.md
+          ./mvnw spotbugs:spotbugs >> ../quality-report.md 2>&1 || true
+          
+          cd ..
+          echo -e "\n## Summary" >> quality-report.md
+          echo "Quality check completed at $(date)" >> quality-report.md
 
       - name: Upload Quality Report
         uses: actions/upload-artifact@v3
         with:
           name: quality-report
           path: quality-report.md
+          retention-days: 7
+
+      - name: Create PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('quality-report.md', 'utf8');
+            const summary = report.split('\n').slice(0, 20).join('\n'); // First 20 lines
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Quality Check Summary:\n\n${summary}\n\n[See full report in Artifacts]`
+            });

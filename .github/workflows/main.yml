@@ -93,21 +93,37 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Verify Maven wrapper
+      - name: Create test configuration
         working-directory: ./backend
         run: |
-          chmod +x mvnw
-          ls -la mvnw
+          mkdir -p src/test/resources
+          cat > src/test/resources/application-test.yml << EOF
+          spring:
+            datasource:
+              driver-class-name: org.postgresql.Driver
+              url: ${SPRING_DATASOURCE_URL}
+              username: ${DB_USER}
+              password: ${DB_PASSWORD}
+            jpa:
+              database-platform: org.hibernate.dialect.PostgreSQLDialect
+              hibernate:
+                ddl-auto: create-drop
+            redis:
+              host: localhost
+              port: 6379
+          jwt:
+            secret:
+              key: ${JWT_SECRET_KEY}
+          EOF
 
       - name: Run tests
         working-directory: ./backend
-        run: ./mvnw clean test
-
-      - name: Run tests with detailed output
-        working-directory: ./backend
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: |
-          mkdir -p test-output
-          ./mvnw clean test -Dtest.output.dir=./test-output
+          ./mvnw test \
+            -Dspring.config.location=classpath:/application-test.yml \
+            -Dspring.profiles.active=test
 
       - name: Upload test results
         if: always()

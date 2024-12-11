@@ -48,101 +48,33 @@ jobs:
   backend-tests:
     runs-on: ubuntu-24.04
 
-    env:
-      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_NAME: my_website_db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      SERVER_PORT: 8080
-      SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/my_website_db"
-
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_DB: my_website_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v3
 
-      - name: Java configuration
+      - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Setup test configuration
+      - name: Run unit tests
         working-directory: ./backend
-        run: |
-          # Create test resources directory
-          mkdir -p src/test/resources
+        run: mvn clean test
 
-          # Create main application-test.properties
-          cat > src/test/resources/application-test.properties << EOF
-          spring.datasource.driver-class-name=org.postgresql.Driver
-          spring.datasource.url=${SPRING_DATASOURCE_URL}
-          spring.datasource.username=${DB_USER}
-          spring.datasource.password=${DB_PASSWORD}
-          spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
-          spring.jpa.hibernate.ddl-auto=create-drop
-          spring.redis.host=localhost
-          spring.redis.port=6379
-          jwt.secret.key=${JWT_SECRET_KEY}
-          EOF
-
-          # Also create in main resources to ensure it's found
-          mkdir -p src/main/resources
-          cp src/test/resources/application-test.properties src/main/resources/
-
-          # Create basic application.properties
-          cat > src/main/resources/application.properties << EOF
-          spring.profiles.active=test
-          EOF
-
-      - name: Make Maven wrapper executable
+      - name: Generate test report
+        if: always()
         working-directory: ./backend
-        run: |
-          chmod +x mvnw
-          ls -la mvnw  # Verify permissions
-
-      - name: Run tests
-        working-directory: ./backend
-        env:
-          SPRING_PROFILES_ACTIVE: test
-        run: |
-          chmod +x mvnw
-          ./mvnw test \
-            -Dspring.profiles.active=test \
-            -Dspring.config.location=classpath:/application.properties,classpath:/application-test.properties
+        run: mvn surefire-report:report-only
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: test-results
-          path: backend/test-output/
+          name: backend-test-results
+          path: |
+            backend/target/surefire-reports/
+            backend/target/site/
           retention-days: 7
 
   build:

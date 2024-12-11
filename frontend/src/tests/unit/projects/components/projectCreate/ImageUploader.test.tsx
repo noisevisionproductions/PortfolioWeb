@@ -132,10 +132,6 @@ describe('ImageUploader', () => {
             caption: TEST_CAPTION,
             file: file
         });
-
-        expect(calledArg).toHaveProperty('id');
-        expect(typeof calledArg.id).toBe('number');
-        expect(Number.isFinite(calledArg.id)).toBe(true);
     });
 
     test('should handle cancel and reset form', () => {

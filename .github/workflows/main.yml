@@ -93,27 +93,32 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Create test configuration
+      - name: Setup test configuration
         working-directory: ./backend
         run: |
+          # Create test resources directory
           mkdir -p src/test/resources
-          cat > src/test/resources/application-test.yml << EOF
-          spring:
-            datasource:
-              driver-class-name: org.postgresql.Driver
-              url: ${SPRING_DATASOURCE_URL}
-              username: ${DB_USER}
-              password: ${DB_PASSWORD}
-            jpa:
-              database-platform: org.hibernate.dialect.PostgreSQLDialect
-              hibernate:
-                ddl-auto: create-drop
-            redis:
-              host: localhost
-              port: 6379
-          jwt:
-            secret:
-              key: ${JWT_SECRET_KEY}
+
+          # Create main application-test.properties
+          cat > src/test/resources/application-test.properties << EOF
+          spring.datasource.driver-class-name=org.postgresql.Driver
+          spring.datasource.url=${SPRING_DATASOURCE_URL}
+          spring.datasource.username=${DB_USER}
+          spring.datasource.password=${DB_PASSWORD}
+          spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+          spring.jpa.hibernate.ddl-auto=create-drop
+          spring.redis.host=localhost
+          spring.redis.port=6379
+          jwt.secret.key=${JWT_SECRET_KEY}
+          EOF
+
+          # Also create in main resources to ensure it's found
+          mkdir -p src/main/resources
+          cp src/test/resources/application-test.properties src/main/resources/
+
+          # Create basic application.properties
+          cat > src/main/resources/application.properties << EOF
+          spring.profiles.active=test
           EOF
 
       - name: Make Maven wrapper executable
@@ -127,10 +132,10 @@ jobs:
         env:
           SPRING_PROFILES_ACTIVE: test
         run: |
-          chmod +x mvnw  # Add this line to ensure permissions
+          chmod +x mvnw
           ./mvnw test \
-            -Dspring.config.location=classpath:/application-test.yml \
-            -Dspring.profiles.active=test
+            -Dspring.profiles.active=test \
+            -Dspring.config.location=classpath:/application.properties,classpath:/application-test.properties
 
       - name: Upload test results
         if: always()

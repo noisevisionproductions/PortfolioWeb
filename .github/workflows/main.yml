@@ -104,7 +104,6 @@ jobs:
         run: |
           mkdir -p src/main/resources
           cat > src/main/resources/key.properties << EOF
-          # Your properties content here
           EOF
 
           nohup ./mvnw spring-boot:run \
@@ -112,7 +111,7 @@ jobs:
             -Dspring.config.location=classpath:/key.properties \
             -Dspring-boot.run.jvmArguments="\
             -Djwt.secret.key=${JWT_SECRET_KEY} \
-            -Dspring.datasource.url=jdbc:postgresql://localhost:5432/portfolio \
+            -Dspring.datasource.url=jdbc:postgresql://localhost:5432/my_website_db \
             -Dspring.datasource.username=${DB_USER} \
             -Dspring.datasource.password=${DB_PASSWORD} \
             -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \

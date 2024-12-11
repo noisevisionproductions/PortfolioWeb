@@ -93,9 +93,20 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Create key.properties for tests
-        working-directory: ./backend/src/main/resources
+      - name: Verify Maven wrapper
+        working-directory: ./backend
         run: |
+          chmod +x mvnw
+          ls -la mvnw  # Verify the file exists and has correct permissions
+
+      - name: Create key.properties for tests
+        working-directory: ./backend
+        run: |
+          mkdir -p src/main/resources
+          cat > src/main/resources/key.properties << EOF
+          # Your properties content here
+          EOF
+
           nohup ./mvnw spring-boot:run \
             -Dspring-boot.run.profiles=dev \
             -Dspring.config.location=classpath:/key.properties \
@@ -106,7 +117,7 @@ jobs:
             -Dspring.datasource.password=${DB_PASSWORD} \
             -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \
             -Dspring.jpa.hibernate.ddl-auto=create-drop" &
-          
+
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'
           echo "Application started"

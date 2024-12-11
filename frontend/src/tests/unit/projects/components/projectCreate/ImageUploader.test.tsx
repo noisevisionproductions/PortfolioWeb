@@ -2,8 +2,32 @@ import {expect, vi} from "vitest";
 import {fireEvent, render, screen} from "@testing-library/react";
 import {ImageUploader} from "@/projects/components/projectCreate/ImageUploader";
 
+interface ActionButtonProps {
+    label: string;
+    onClick: () => void;
+}
+
+interface FormInputProps {
+    value: string;
+    onChange: (value: string) => void;
+    id: string;
+}
+
+const TEST_FILE_NAME = 'test.png';
+const MOCK_IMAGE_URL = 'blob:http://localhost:3000/mock-image';
+const TEST_CAPTION = 'Test Caption';
+const MOCK_IMAGE_CONTENT = 'mock image';
+const FILE_INPUT_SELECTOR = 'input[type="file"]';
+
+const TEST_IDS = {
+    ADD_IMAGE_BUTTON: 'action-button-projectForm.addImage',
+    CAPTION_INPUT: 'newImageCaption',
+    CANCEL_BUTTON: 'action-button-common.cancel',
+    SAVE_BUTTON: 'action-button-projectForm.saveImage',
+} as const;
+
 vi.mock('@/components/shared/ActionButton', () => ({
-    ActionButton: ({label, onClick}: any) => (
+    ActionButton: ({label, onClick}: ActionButtonProps) => (
         <button
             onClick={onClick}
             data-testid={`action-button-${label}`}
@@ -14,7 +38,7 @@ vi.mock('@/components/shared/ActionButton', () => ({
 }));
 
 vi.mock('@/components/shared/FormInput', () => ({
-    FormInput: ({value, onChange, id}: any) => (
+    FormInput: ({value, onChange, id}: FormInputProps) => (
         <input
             id={id}
             value={value}
@@ -27,9 +51,8 @@ vi.mock('@/components/shared/FormInput', () => ({
 describe('ImageUploader', () => {
     const mockOnImageAdd = vi.fn();
     const mockT = (key: string) => key;
-    const mockImageUrl = 'blob:http://localhost:3000/mock-image';
 
-    const createObjectURLMock = vi.fn(() => mockImageUrl);
+    const createObjectURLMock = vi.fn(() => MOCK_IMAGE_URL);
     URL.createObjectURL = createObjectURLMock;
 
     beforeEach(() => {
@@ -50,8 +73,8 @@ describe('ImageUploader', () => {
             />
         );
 
-        expect(screen.getByTestId('action-button-projectForm.addImage')).toBeInTheDocument();
-        expect(screen.queryByTestId('newImageCaption')).not.toBeInTheDocument();
+        expect(screen.getByTestId(TEST_IDS.ADD_IMAGE_BUTTON)).toBeInTheDocument();
+        expect(screen.queryByTestId(TEST_IDS.CAPTION_INPUT)).not.toBeInTheDocument();
     });
 
     test('should handle file upload and show caption form', () => {
@@ -62,8 +85,8 @@ describe('ImageUploader', () => {
             />
         );
 
-        const file = new File(['mock image'], 'test.png', {type: 'image/png'});
-        const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+        const file = new File([MOCK_IMAGE_CONTENT], TEST_FILE_NAME, {type: 'image/png'});
+        const input = document.querySelector(FILE_INPUT_SELECTOR) as HTMLInputElement;
 
         Object.defineProperty(input, 'files', {
             value: [file]
@@ -72,10 +95,10 @@ describe('ImageUploader', () => {
         fireEvent.change(input);
 
         expect(createObjectURLMock).toHaveBeenCalledWith(file);
-        expect(screen.getByTestId('newImageCaption')).toBeInTheDocument();
+        expect(screen.getByTestId(TEST_IDS.CAPTION_INPUT)).toBeInTheDocument();
         expect(screen.getByAltText('Preview')).toBeInTheDocument();
-        expect(screen.getByTestId('action-button-common.cancel')).toBeInTheDocument();
-        expect(screen.getByTestId('action-button-projectForm.saveImage')).toBeInTheDocument();
+        expect(screen.getByTestId(TEST_IDS.CANCEL_BUTTON)).toBeInTheDocument();
+        expect(screen.getByTestId(TEST_IDS.SAVE_BUTTON)).toBeInTheDocument();
     });
 
     test('should handle adding image with caption', () => {
@@ -86,8 +109,8 @@ describe('ImageUploader', () => {
             />
         );
 
-        const file = new File(['mock image'], 'test.png', {type: 'image/png'});
-        const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+        const file = new File([MOCK_IMAGE_CONTENT], TEST_FILE_NAME, {type: 'image/png'});
+        const input = document.querySelector(FILE_INPUT_SELECTOR) as HTMLInputElement;
 
         Object.defineProperty(input, 'files', {
             value: [file]
@@ -95,18 +118,18 @@ describe('ImageUploader', () => {
 
         fireEvent.change(input);
 
-        const captionInput = screen.getByTestId('newImageCaption');
-        fireEvent.change(captionInput, {target: {value: 'Test Caption'}});
+        const captionInput = screen.getByTestId(TEST_IDS.CAPTION_INPUT);
+        fireEvent.change(captionInput, {target: {value: TEST_CAPTION}});
 
-        fireEvent.click(screen.getByTestId('action-button-projectForm.saveImage'));
+        fireEvent.click(screen.getByTestId(TEST_IDS.SAVE_BUTTON));
 
         expect(mockOnImageAdd).toHaveBeenCalledTimes(1);
 
         const calledArg = mockOnImageAdd.mock.calls[0][0];
 
         expect(calledArg).toMatchObject({
-            imageUrl: mockImageUrl,
-            caption: 'Test Caption',
+            imageUrl: MOCK_IMAGE_URL,
+            caption: TEST_CAPTION,
             file: file
         });
 
@@ -123,17 +146,17 @@ describe('ImageUploader', () => {
             />
         );
 
-        const file = new File(['mock image'], 'test.png', {type: 'image/png'});
-        const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+        const file = new File([MOCK_IMAGE_CONTENT], TEST_FILE_NAME, {type: 'image/png'});
+        const input = document.querySelector(FILE_INPUT_SELECTOR) as HTMLInputElement;
 
         Object.defineProperty(input, 'files', {
             value: [file]
         });
 
         fireEvent.change(input);
-        fireEvent.click(screen.getByTestId('action-button-common.cancel'));
+        fireEvent.click(screen.getByTestId(TEST_IDS.CANCEL_BUTTON));
 
-        expect(screen.queryByTestId('newImageCaption')).not.toBeInTheDocument();
+        expect(screen.queryByTestId(TEST_IDS.CAPTION_INPUT)).not.toBeInTheDocument();
         expect(screen.queryByAltText('Preview')).not.toBeInTheDocument();
     });
 });

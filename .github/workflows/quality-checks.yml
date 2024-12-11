@@ -117,7 +117,6 @@ jobs:
           echo -e "\n## Summary" >> quality-report.md
           echo "Quality check completed at $(date)" >> quality-report.md
 
-
       - name: Upload Quality Report
         uses: actions/upload-artifact@v4
         with:

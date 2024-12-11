@@ -87,78 +87,31 @@ jobs:
           mkdir -p backend/src/test/resources
           mkdir -p backend/uploads-test
           
-          # Create application.yml (base config)
-          cat << EOF > backend/src/test/resources/application.yml
-          spring:
-            profiles:
-              active: test
+          # Create minimal application.properties
+          cat << EOF > backend/src/test/resources/application.properties
+          spring.profiles.active=test
+          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+          spring.datasource.username=sa
+          spring.datasource.password=password
+          spring.datasource.driver-class-name=org.h2.Driver
+          spring.jpa.hibernate.ddl-auto=create-drop
+          spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+          spring.redis.host=localhost
+          spring.redis.port=6379
+          jwt.secret=testsecretkey123456789012345678901234567890
+          file.upload-dir=./uploads-test
           EOF
           
-          # Create application-test.yml
-          cat << EOF > backend/src/test/resources/application-test.yml
-          spring:
-            application:
-              name: portfolio-backend
-            datasource:
-              url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-              username: sa
-              password: password
-              driver-class-name: org.h2.Driver
-            redis:
-              host: localhost
-              port: 6379
-              database: 0
-              timeout: 60000
-            jpa:
-              hibernate:
-                ddl-auto: create-drop
-              show-sql: true
-              database-platform: org.hibernate.dialect.H2Dialect
-            servlet:
-              multipart:
-                enabled: true
-                file-size-threshold: 2KB
-                max-file-size: 10MB
-                max-request-size: 10MB
-            web:
-              resources:
-                static-locations: classpath:/static/,file:\${file.upload-dir}/
-          
-          logging:
-            level:
-              root: DEBUG
-              org.springframework: DEBUG
-              org.hibernate: DEBUG
-              noisevisionproductions.portfolio: DEBUG
-          
-          file:
-            upload-dir: ./uploads-test
-          
-          application:
-            security:
-              jwt:
-                secret-key: \${JWT_SECRET_KEY}
-                expiration: 86400000
-                refresh-token:
-                  expiration: 604800000
-          
-          server:
-            error:
-              include-message: always
-              include-binding-errors: always
-              include-stacktrace: never
-          EOF
-
-      - name: Debug file structure
-        run: |
-          echo "Content of test resources directory:"
+          # Verify file creation
+          echo "Test resources contents:"
           ls -la backend/src/test/resources/
-          echo "Content of application-test.yml:"
-          cat backend/src/test/resources/application-test.yml
+          echo "Properties file content:"
+          cat backend/src/test/resources/application.properties
 
-      - name: Run unit tests with debug
+      - name: Run tests with verbose output
         working-directory: ./backend
-        run: mvn clean test -Dspring.profiles.active=test -X
+        run: |
+          mvn test -X -Dspring.profiles.active=test -Dspring.config.location=classpath:/application.properties
 
       - name: Upload test results
         if: always()

@@ -48,6 +48,28 @@ jobs:
   backend-tests:
     runs-on: ubuntu-24.04
 
+    services:
+      # Adding Redis service for caching tests
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SPRING_PROFILES_ACTIVE: test
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_REDIS_HOST: localhost
+      SPRING_REDIS_PORT: 6379
+      JWT_SECRET: testsecretkey123456789012345678901234567890
+
     steps:
       - uses: actions/checkout@v3
 
@@ -57,6 +79,20 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
           cache: 'maven'
+
+      - name: Copy test application.properties
+        run: |
+          mkdir -p backend/src/test/resources
+          cat << EOF > backend/src/test/resources/application-test.properties
+          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+          spring.datasource.username=sa
+          spring.datasource.password=password
+          spring.jpa.hibernate.ddl-auto=create-drop
+          spring.jpa.show-sql=true
+          spring.redis.host=localhost
+          spring.redis.port=6379
+          jwt.secret=testsecretkey123456789012345678901234567890
+          EOF
 
       - name: Run unit tests
         working-directory: ./backend

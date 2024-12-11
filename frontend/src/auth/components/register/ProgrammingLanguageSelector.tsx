@@ -13,6 +13,8 @@ export const LanguageSelector: React.FC<ProgrammingLanguageSelectorProps> = ({
                                                                                  selected,
                                                                                  onChange
                                                                              }) => {
+    const groupId = React.useId();
+
     const toggleLanguage = (language: string) => {
         onChange(
             selected.includes(language)
@@ -23,10 +25,17 @@ export const LanguageSelector: React.FC<ProgrammingLanguageSelectorProps> = ({
 
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+                id={`${groupId}-label`}
+                className="block text-sm font-medium text-gray-700 mb-2"
+            >
                 {label}
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div
+                role="group"
+                aria-labelledby={`${groupId}-label`}
+                className="flex flex-wrap gap-2"
+            >
                 {options.map((language) => (
                     <button
                         key={language}

@@ -11,6 +11,8 @@ import programmingLanguages from '../../../assets/programmingLanguages.json';
 import {LoadingSpinner} from "@/components/shared/LoadingSpinner";
 import {useBaseProject, useProjectImage, useProjectContributor, useProjectFeature} from "../../context";
 import {useLanguageSwitch} from "@/utils/translations/LanguageContext";
+import {ErrorMessage} from "@/components/shared/ErrorMessage";
+import {SuccessAlert} from "@/auth/components/SuccessAlert";
 
 const ProjectFormPage = () => {
     const {t} = useTranslation();
@@ -27,6 +29,8 @@ const ProjectFormPage = () => {
         createProject,
         updateProject
     } = useBaseProject();
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const {uploadProjectImage} = useProjectImage();
     const {addContributor} = useProjectContributor();
@@ -65,10 +69,10 @@ const ProjectFormPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSubmitError(null);
 
         try {
             let savedProject: Project;
-
             const newImages = project.projectImages.filter(img => 'file' in img && img.file);
 
             if (isEditMode && id) {
@@ -98,27 +102,20 @@ const ProjectFormPage = () => {
 
             const projectId = savedProject.id!
 
-            if (newImages.length > 0) {
-                for (const image of newImages) {
-                    if (image.file) {
-                        await uploadProjectImage(projectId, image.file);
-                    }
-                }
-            }
+            await Promise.all([
+                ...(newImages.length > 0
+                    ? newImages.map(image => image.file && uploadProjectImage(projectId, image.file))
+                    : []),
+                ...(project.features.length > 0 ? [await updateFeatures(projectId, project.features)] : []),
+                ...(project.contributors.length > 0 && !isEditMode
+                    ? project.contributors.map(contributor => addContributor(projectId, contributor))
+                    : [])
+            ]);
 
-            if (project.features.length > 0) {
-                await updateFeatures(projectId, project.features);
-            }
-
-            if (project.contributors.length > 0 && !isEditMode) {
-                for (const contributor of project.contributors) {
-                    await addContributor(projectId, contributor);
-                }
-            }
-
-            navigate('/');
+            setShowSuccessMessage(true);
         } catch (error) {
             console.error(`Error ${isEditMode ? 'updating' : 'creating'} project:`, error);
+            setSubmitError(error instanceof Error ? error.message : String(error));
         }
     };
 
@@ -140,21 +137,14 @@ const ProjectFormPage = () => {
         return <LoadingSpinner/>;
     }
 
-    if (baseError) {
+    if (baseError || submitError) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-                    <p className="text-red-500 mb-4">
-                        {baseError}
-                    </p>
-                    <ActionButton
-                        label={t('common.backToHome')}
-                        onClick={() => navigate('/')}
-                        variant="secondary"
-                    />
-                </div>
-            </div>
-        )
+            <ErrorMessage
+                error={submitError || baseError}
+                onBack={() =>
+                    navigate('/')} t={t}
+            />
+        );
     }
 
     return (
@@ -168,6 +158,17 @@ const ProjectFormPage = () => {
             />
             <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-3xl mx-auto bg-white rounded-lg shadow p-6">
+                    <SuccessAlert
+                        isOpen={showSuccessMessage}
+                        onClose={() => {
+                            setShowSuccessMessage(false);
+                            navigate('/');
+                        }}
+                        title={t('projectForm.successTitle')}
+                        description={t('projectForm.successDescription')}
+                        buttonText={t('common.continue')}
+                    />
+
                     <h1 className="text-2xl font-bold mb-6">
                         {isEditMode ? t('projectForm.editTitle') : t('projectForm.createTitle')}
                     </h1>

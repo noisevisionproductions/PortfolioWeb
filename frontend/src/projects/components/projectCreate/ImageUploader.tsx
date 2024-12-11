@@ -58,7 +58,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({onImageAdd, t}) => 
                     ref={fileInputRef}
                     className="hidden"
                     accept="image/*"
+                    aria-label={t('projectForm.uploadImage')}
                     onChange={handleFileUpload}
+                    data-testid="file-input"
                 />
                 <ActionButton
                     label={t('projectForm.addImage')}

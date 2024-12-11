@@ -7,7 +7,8 @@ export const translations = {
                 errorWhileLoading: "Błąd podczas ładowania",
                 backToHome: "Wróć do strony głównej",
                 loading: "Ładowanie...",
-                redirecting: "Przekierowywanie..."
+                redirecting: "Przekierowywanie...",
+                continue: "Kontynuuj"
             },
             errors: {
                 noPermissions: "Brak uprawnień do wykonania tej akcji",
@@ -126,7 +127,9 @@ export const translations = {
                 updateProject: "Zaktualizuj projekt",
                 createCaption: "Dodaj opis do obrazu...",
                 saveImage: "Zapisz obraz",
-                fetchError: "Nie udało się pobrać danych projektu"
+                fetchError: "Nie udało się pobrać danych projektu",
+                successTitle: "Projekt został stworzony",
+                projectForm: "Zostaniesz przeniesiony do Menu Głównego"
             },
             projectDetails: {
                 confirmDelete: "Czy na pewno chcesz usunąć ten projekt?",
@@ -154,7 +157,8 @@ export const translations = {
                 errorWhileLoading: "Error while loading",
                 backToHome: "Back to main page",
                 loading: "Loading...",
-                redirecting: "Redirecting..."
+                redirecting: "Redirecting...",
+                continue: "Continue"
             },
             errors: {
                 noPermissions: "You don't have permission to perform this action",
@@ -274,7 +278,9 @@ export const translations = {
                 updateProject: "Update project",
                 createCaption: "Add caption for image...",
                 saveImage: "Save image",
-                fetchError: "Failed to get project data"
+                fetchError: "Failed to get project data",
+                SuccessTitle: "Project has been created",
+                projectForm: "You will be taken to the Main Menu"
             },
             projectDetails: {
                 confirmDelete: "Are you sure you want to delete this project?",

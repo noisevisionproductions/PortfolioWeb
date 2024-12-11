@@ -9,7 +9,7 @@ vi.mock('@/utils/translations/LanguageContext', () => ({
 
 describe('LanguageSwitch', () => {
     const mockSwitchLanguage = vi.fn();
-    const mockUseLanguageSwitch = useLanguageSwitch as jest.Mock;
+    const mockUseLanguageSwitch = useLanguageSwitch as unknown as ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         vi.clearAllMocks;

@@ -3,7 +3,6 @@ import {useBaseAuthContext} from "@/auth/hooks/useBaseAuthContext";
 import {MemoryRouter} from "react-router-dom";
 import {ProtectedRoute} from "@/auth/components/ProtectedRoute";
 import {render, screen} from '@testing-library/react';
-import '@testing-library/jest-dom';
 import {Authority} from "@/auth/types/roles";
 
 vi.mock('react-router-dom', async () => {
@@ -21,7 +20,7 @@ vi.mock('@/components/shared/LoadingSpinner', () => ({
 }));
 
 describe('ProtectedRoute', () => {
-    const mockUseBaseAuthContext = useBaseAuthContext as jest.Mock;
+    const mockUseBaseAuthContext = useBaseAuthContext as unknown as ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         vi.clearAllMocks;

@@ -61,10 +61,10 @@ jobs:
 
     env:
       SPRING_PROFILES_ACTIVE: test
-      SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-      SPRING_DATASOURCE_USERNAME: sa
-      SPRING_DATASOURCE_PASSWORD: password
-      JWT_SECRET: testsecretkey123456789012345678901234567890
+      PG_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      PG_USERNAME: sa
+      PG_PASSWORD: password
+      JWT_SECRET_KEY: testsecretkey123456789012345678901234567890
       FILE_UPLOAD_DIR: ./uploads-test
 
     steps:
@@ -77,41 +77,71 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Create test directories
+      - name: Create test configuration
         run: |
           mkdir -p backend/src/test/resources
           mkdir -p backend/uploads-test
 
-      - name: Copy test application.properties
-        run: |
-          mkdir -p backend/src/test/resources
-          mkdir -p backend/uploads-test
-          
-          # Create minimal application.properties
-          cat << EOF > backend/src/test/resources/application.properties
-          spring.profiles.active=test
-          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-          spring.datasource.username=sa
-          spring.datasource.password=password
-          spring.datasource.driver-class-name=org.h2.Driver
-          spring.jpa.hibernate.ddl-auto=create-drop
-          spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-          spring.redis.host=localhost
-          spring.redis.port=6379
-          jwt.secret=testsecretkey123456789012345678901234567890
-          file.upload-dir=./uploads-test
+          # Create main test config
+          cat << EOF > backend/src/test/resources/application.yml
+          spring:
+            profiles:
+              active: test
           EOF
-          
-          # Verify file creation
-          echo "Test resources contents:"
-          ls -la backend/src/test/resources/
-          echo "Properties file content:"
-          cat backend/src/test/resources/application.properties
 
-      - name: Run tests with verbose output
+          # Create test profile config
+          cat << EOF > backend/src/test/resources/application-test.yml
+          spring:
+            application:
+              name: portfolio-backend
+            datasource:
+              url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+              username: sa
+              password: password
+              driver-class-name: org.h2.Driver
+            redis:
+              host: localhost
+              port: 6379
+              database: 0
+              timeout: 60000
+            jpa:
+              hibernate:
+                ddl-auto: create-drop
+              show-sql: true
+              database-platform: org.hibernate.dialect.H2Dialect
+            servlet:
+              multipart:
+                enabled: true
+                file-size-threshold: 2KB
+                max-file-size: 10MB
+                max-request-size: 10MB
+
+          file:
+            upload-dir: ./uploads-test
+
+          application:
+            security:
+              jwt:
+                secret-key: \${JWT_SECRET_KEY}
+                expiration: 86400000
+                refresh-token:
+                  expiration: 604800000
+          EOF
+
+          # Create .env for dotenv support
+          cat << EOF > backend/.env
+          PG_URL=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+          PG_USERNAME=sa
+          PG_PASSWORD=password
+          JWT_SECRET_KEY=testsecretkey123456789012345678901234567890
+          EOF
+
+      - name: Create empty key.properties
+        run: touch backend/src/main/resources/key.properties
+
+      - name: Run tests
         working-directory: ./backend
-        run: |
-          mvn test -X -Dspring.profiles.active=test -Dspring.config.location=classpath:/application.properties
+        run: mvn test -Dspring.profiles.active=test -X
 
       - name: Upload test results
         if: always()

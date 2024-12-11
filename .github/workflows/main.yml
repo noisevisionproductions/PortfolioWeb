@@ -96,16 +96,20 @@ jobs:
       - name: Create key.properties for tests
         working-directory: ./backend/src/main/resources
         run: |
-          mkdir -p $(dirname key.properties)
-          cat > key.properties << EOF
-          jwt.secret.key=${JWT_SECRET_KEY}
-          spring.datasource.url=${SPRING_DATASOURCE_URL}
-          spring.datasource.username=${DB_USER}
-          spring.datasource.password=${DB_PASSWORD}
-          spring.redis.host=localhost
-          spring.redis.port=6379
-          server.port=${SERVER_PORT}
-          EOF
+          nohup ./mvnw spring-boot:run \
+            -Dspring-boot.run.profiles=dev \
+            -Dspring.config.location=classpath:/key.properties \
+            -Dspring-boot.run.jvmArguments="\
+            -Djwt.secret.key=${JWT_SECRET_KEY} \
+            -Dspring.datasource.url=jdbc:postgresql://localhost:5432/portfolio \
+            -Dspring.datasource.username=${DB_USER} \
+            -Dspring.datasource.password=${DB_PASSWORD} \
+            -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \
+            -Dspring.jpa.hibernate.ddl-auto=create-drop" &
+          
+          echo "Waiting for application to start..."
+          timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'
+          echo "Application started"
 
       - name: Make Maven wrapper executable
         working-directory: ./backend

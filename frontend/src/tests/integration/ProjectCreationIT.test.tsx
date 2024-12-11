@@ -22,7 +22,6 @@ const mockUpdateFeaturesPromise = vi.fn().mockImplementation(() => Promise.resol
 const mockNavigate = vi.fn();
 
 const mockObjectUrl = "mock-object-url";
-const technology = "Spring Boot";
 global.URL.createObjectURL = vi.fn(() => mockObjectUrl);
 
 const mockSavedProject = {
@@ -35,7 +34,7 @@ const mockSavedProject = {
     startDate: '2024-01-01',
     endDate: '2024-12-31',
     features: ['Feature 1', 'Feature 2'],
-    technologies: ['React', 'TypeScript', technology],
+    technologies: ['React', 'TypeScript', 'Spring Boot'],
     contributors: [
         {
             name: 'John Doe',
@@ -111,7 +110,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/assets/programmingLanguages.json', () => ({
     default: {
-        languages: ['React', 'TypeScript', technology, 'JavaScript', 'Java'],
+        languages: ['React', 'TypeScript', 'Spring Boot', 'JavaScript', 'Java'],
         other: {
             pl: ['Next.js', 'Node.js'],
             en: ['Next.js', 'Node.js']
@@ -145,7 +144,7 @@ describe('Project Creation Integration Test', () => {
         startDate: new Date('2024-01-01'),
         endDate: new Date('2024-12-31'),
         features: ['Feature 1', 'Feature 2'],
-        technologies: ['React', 'TypeScript', technology],
+        technologies: ['React', 'TypeScript', 'Spring Boot'],
         contributors: [
             {
                 name: 'John Doe',

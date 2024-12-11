@@ -84,6 +84,17 @@ jobs:
 
       - name: Copy test application.properties
         run: |
+          mkdir -p backend/src/test/resources
+          mkdir -p backend/uploads-test
+          
+          # Create application.yml (base config)
+          cat << EOF > backend/src/test/resources/application.yml
+          spring:
+            profiles:
+              active: test
+          EOF
+          
+          # Create application-test.yml
           cat << EOF > backend/src/test/resources/application-test.yml
           spring:
             application:
@@ -115,11 +126,9 @@ jobs:
           
           logging:
             level:
-              root: INFO
-              org:
-                springframework:
-                  security: INFO
-                  boot: INFO
+              root: DEBUG
+              org.springframework: DEBUG
+              org.hibernate: DEBUG
               noisevisionproductions.portfolio: DEBUG
           
           file:
@@ -128,7 +137,7 @@ jobs:
           application:
             security:
               jwt:
-                secret-key: testsecretkey123456789012345678901234567890
+                secret-key: \${JWT_SECRET_KEY}
                 expiration: 86400000
                 refresh-token:
                   expiration: 604800000
@@ -140,14 +149,16 @@ jobs:
               include-stacktrace: never
           EOF
 
-      - name: Run unit tests
-        working-directory: ./backend
-        run: mvn clean test
+      - name: Debug file structure
+        run: |
+          echo "Content of test resources directory:"
+          ls -la backend/src/test/resources/
+          echo "Content of application-test.yml:"
+          cat backend/src/test/resources/application-test.yml
 
-      - name: Generate test report
-        if: always()
+      - name: Run unit tests with debug
         working-directory: ./backend
-        run: mvn surefire-report:report-only
+        run: mvn clean test -Dspring.profiles.active=test -X
 
       - name: Upload test results
         if: always()

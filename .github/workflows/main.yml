@@ -62,7 +62,7 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_DB: portfolio_test
+          POSTGRES_DB: my_website_db
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:

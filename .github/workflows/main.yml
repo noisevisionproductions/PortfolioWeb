@@ -116,11 +116,18 @@ jobs:
               key: ${JWT_SECRET_KEY}
           EOF
 
+      - name: Make Maven wrapper executable
+        working-directory: ./backend
+        run: |
+          chmod +x mvnw
+          ls -la mvnw  # Verify permissions
+
       - name: Run tests
         working-directory: ./backend
         env:
           SPRING_PROFILES_ACTIVE: test
         run: |
+          chmod +x mvnw  # Add this line to ensure permissions
           ./mvnw test \
             -Dspring.config.location=classpath:/application-test.yml \
             -Dspring.profiles.active=test

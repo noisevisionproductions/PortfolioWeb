@@ -72,7 +72,7 @@ jobs:
           ls -la mvnw
 
       - name: Create application properties
-        working-directory: ./backend/src/main/resources
+        working-directory: ./backend
         run: |
           mkdir -p $(dirname application-docs.properties)
           cat > application-docs.properties << EOF
@@ -89,7 +89,8 @@ jobs:
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
           echo "Using JAR file: $JAR_FILE"
           nohup java -jar "$JAR_FILE" \
-            --spring.config.location=classpath:/application-docs.properties \
+            --spring.profiles.active=docs \
+            --spring.config.location=file:./target/classes/application-docs.properties \
             > app.log 2>&1 &
           
           echo "Waiting for application to start (max 60 seconds)..."

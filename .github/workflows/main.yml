@@ -97,62 +97,25 @@ jobs:
         working-directory: ./backend
         run: |
           chmod +x mvnw
-          ls -la mvnw  # Verify the file exists and has correct permissions
+          ls -la mvnw
 
-      - name: Create key.properties for tests
+      - name: Run tests
+        working-directory: ./backend
+        run: ./mvnw clean test
+
+      - name: Run tests with detailed output
         working-directory: ./backend
         run: |
-          mkdir -p src/main/resources
-          cat > src/main/resources/key.properties << EOF
-          spring.datasource.driver-class-name=org.postgresql.Driver
-          spring.datasource.url=${SPRING_DATASOURCE_URL}
-          spring.datasource.username=${DB_USER}
-          spring.datasource.password=${DB_PASSWORD}
-          spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
-          spring.jpa.hibernate.ddl-auto=create-drop
-          EOF
-          
-          nohup ./mvnw spring-boot:run \
-          -Dspring-boot.run.profiles=dev \
-          -Dspring.config.location=classpath:/key.properties \
-          -Dspring-boot.run.jvmArguments="\
-          -Djwt.secret.key=${JWT_SECRET_KEY} \
-          -Dspring.datasource.driver-class-name=org.postgresql.Driver \
-          -Dspring.datasource.url=${SPRING_DATASOURCE_URL} \
-          -Dspring.datasource.username=${DB_USER} \
-          -Dspring.datasource.password=${DB_PASSWORD} \
-          -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \
-          -Dspring.jpa.hibernate.ddl-auto=create-drop" &
+          mkdir -p test-output
+          ./mvnw clean test -Dtest.output.dir=./test-output
 
-          - name: Verify Database Connection
-          run: |
-            sudo apt-get install -y postgresql-client
-            until PGPASSWORD=${DB_PASSWORD} psql -h localhost -U ${DB_USER} -d ${DB_NAME} -c '\l'; do
-              echo "Waiting for PostgreSQL..."
-              sleep 2
-            done
-
-          - name: Make Maven wrapper executable
-            working-directory: ./backend
-            run: chmod +x mvnw
-
-          - name: Run tests
-            working-directory: ./backend
-            run: ./mvnw clean test
-
-          - name: Run tests with detailed output
-            working-directory: ./backend
-            run: |
-              mkdir -p test-output  # Utworzenie katalogu przed testami
-              ./mvnw clean test -Dtest.output.dir=./test-output
-
-          - name: Upload test results
-            if: always()
-            uses: actions/upload-artifact@v3
-            with:
-              name: test-results
-              path: backend/test-output/
-              retention-days: 7
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: backend/test-output/
+          retention-days: 7
 
   build:
     needs: [ frontend-tests, backend-tests ]

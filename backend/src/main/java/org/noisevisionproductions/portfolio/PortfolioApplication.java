@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @PropertySource("classpath:key.properties")
 public class PortfolioApplication {
     public static void main(String[] args) {
-        SpringApplication.run(PortfolioApplication.class, args);
+        SpringApplication springApplication = new SpringApplication(PortfolioApplication.class);
+        springApplication.setAdditionalProfiles("dev");
+        springApplication.run(args);
     }
 }

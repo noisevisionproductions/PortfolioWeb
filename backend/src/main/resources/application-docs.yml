@@ -1,57 +1,29 @@
-spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password: password
-    driver-class-name: org.h2.Driver
-
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-        format_sql: true
-        show_sql: true
-    show-sql: true
-    generate-ddl: true
-
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
-
-  data:
-    redis:
-      enabled: false
-
-  sql:
-    init:
-      mode: always
-
-springdoc:
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-    operationsSorter: method
-    tagsSorter: alpha
-  api-docs:
-    enabled: true
-    path: /v3/api-docs
-  show-actuator: true
-  packages-to-scan: org.noisevisionproductions.portfolio
-
-application:
-  security:
-    jwt:
-      secret-key: testsecretkey123456789012345678901234567890
-      expiration: 86400000
-      refresh-token:
-        expiration: 604800000
-
-server:
-  port: 9090
-  error:
-    include-message: always
-    include-binding-errors: always
+spring.profiles.active=docs
+spring.main.allow-bean-definition-overriding=true
+  
+  # Database Configuration
+spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.datasource.driver-class-name=org.h2.Driver
+  
+  # JPA Configuration
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=true
+  
+  # Disable Redis completely
+spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+spring.data.redis.repositories.enabled=false
+  
+  # Documentation Configuration
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
+  
+  # Security Configuration
+application.security.jwt.secret-key=${JWT_SECRET:testsecretkey123456789012345678901234567890}
+application.security.jwt.expiration=86400000
+application.security.jwt.refresh-token.expiration=604800000
+  
+  # Server Configuration
+server.port=${APP_PORT:9090}

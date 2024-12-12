@@ -112,7 +112,7 @@ jobs:
           echo "Using JAR file: $JAR_FILE"
           
           nohup java -jar "$JAR_FILE" \
-            --spring.profiles.active=docs \  # This line activates the docs profile
+            --spring.profiles.active=docs \
             --spring.config.additional-location=file:target/classes/application-docs.properties \
             --debug \
             > app.log 2>&1 &

@@ -75,34 +75,44 @@ jobs:
         working-directory: ./backend
         run: |
           mkdir -p target/classes
-          cat > target/classes/application-docs.properties << EOF
-          server.port=${{ env.APP_PORT }}
-          spring.profiles.active=docs
-
-          # Database Configuration
-          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-          spring.datasource.username=sa
-          spring.datasource.password=password
-          spring.datasource.driver-class-name=org.h2.Driver
+           cat > target/classes/application-docs.properties << EOF
+           # Server
+           server.port=${{ env.APP_PORT }}
+           spring.main.web-application-type=servlet
           
-          # JPA Configuration
-          spring.jpa.hibernate.ddl-auto=create-drop
-          spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+           # Disable Security
+           spring.autoconfigure.exclude=\
+             org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,\
+             org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration,\
+             org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration,\
+             org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
           
-          # Redis Configuration
-          spring.redis.host=localhost
-          spring.redis.port=6379
+           # Minimal Database Config
+           spring.datasource.driver-class-name=org.h2.Driver
+           spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+           spring.datasource.username=sa
+           spring.datasource.password=
+           spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+           spring.jpa.hibernate.ddl-auto=create-drop
+           spring.jpa.show-sql=false
           
-          # Security Configuration
-          application.security.jwt.secret-key=${{ secrets.JWT_SECRET || 'testsecretkey123456789012345678901234567890' }}
-          application.security.jwt.expiration=86400000
-          application.security.jwt.refresh-token.expiration=604800000
+           # Disable Redis
+           spring.data.redis.repositories.enabled=false
+           spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
           
-          # Documentation Configuration
-          springdoc.swagger-ui.path=/swagger-ui.html
-          springdoc.api-docs.path=/v3/api-docs
-          spring.main.allow-bean-definition-overriding=true
-          EOF
+           # Documentation Settings
+           springdoc.api-docs.enabled=true
+           springdoc.swagger-ui.enabled=true
+           springdoc.swagger-ui.path=/swagger-ui.html
+           springdoc.api-docs.path=/v3/api-docs
+           springdoc.packages-to-scan=org.noisevisionproductions.portfolio
+           springdoc.paths-to-match=/**
+          
+           # Disable other features
+           spring.main.allow-bean-definition-overriding=true
+           spring.main.allow-circular-references=true
+           spring.jmx.enabled=false
+           EOF
 
       - name: Start Application
         working-directory: ./backend
@@ -111,26 +121,67 @@ jobs:
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
           echo "Using JAR file: $JAR_FILE"
           
-          # Run with debug to see what's happening
+          # Start with explicit disable flags
           nohup java -jar "$JAR_FILE" \
-            --spring.profiles.active=docs \
-            --spring.config.additional-location=file:target/classes/application-docs.properties \
-            --debug \
-            > app.log 2>&1 &
+           --spring.profiles.active=docs \
+           --spring.config.location=file:./target/classes/application-docs.properties \
+           --spring.security.enabled=false \
+           --spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration \
+           > app.log 2>&1 &
+          
+          # Add more debugging
+          echo "Configuration file contents:"
+          cat target/classes/application-docs.properties
+          
+          echo "Waiting for application to start (max 60 seconds)..."
+          attempt=1
+          while [ $attempt -le 30 ]; do
+           echo "Attempt $attempt of 30..."
+           if nc -z localhost ${{ env.APP_PORT }}; then
+             echo "Application started successfully"
+             sleep 5  # Give it a few more seconds to fully initialize
+             break
+           fi
+           if [ $attempt -eq 30 ]; then
+             echo "Application failed to start within timeout"
+             echo "Full application log:"
+             cat app.log
+             exit 1
+           fi
+           attempt=$((attempt+1))
+           sleep 2
+          done
 
       - name: Verify API availability
         run: |
           echo "Verifying API docs endpoint..."
-          for i in {1..5}; do
-            if curl -s -f "http://localhost:${{ env.APP_PORT }}/v3/api-docs" > /dev/null; then
+          attempt=1
+          max_attempts=10
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts..."
+          
+            # Try with verbose output
+            response=$(curl -v -s "http://localhost:${{ env.APP_PORT }}/v3/api-docs" 2>&1)
+            status=$?
+          
+            if [ $status -eq 0 ]; then
               echo "API documentation endpoint is accessible"
               break
             fi
-            if [ $i -eq 5 ]; then
-              echo "API documentation endpoint is not accessible"
+          
+            echo "Curl response:"
+            echo "$response"
+          
+            if [ $attempt -eq $max_attempts ]; then
+              echo "API documentation endpoint is not accessible after $max_attempts attempts"
+              echo "Application logs:"
               cat backend/app.log
               exit 1
             fi
+          
+            echo "Retrying in 3 seconds..."
+            attempt=$((attempt+1))
             sleep 3
           done
 

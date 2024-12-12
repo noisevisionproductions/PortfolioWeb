@@ -75,39 +75,11 @@ jobs:
         working-directory: ./backend
         run: |
           mkdir -p target/classes
-          
-          # Create base application.properties
-          cat > target/classes/application.properties << EOF
-          spring.profiles.default=docs
-          EOF
-          
-          # Create docs-specific properties
           cat > target/classes/application-docs.properties << EOF
-          # Server
           server.port=${{ env.APP_PORT }}
-          
-          # Database
-          spring.datasource.driver-class-name=org.h2.Driver
-          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
-          spring.datasource.username=sa
-          spring.datasource.password=
-          spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-          spring.jpa.hibernate.ddl-auto=create-drop
-          
-          # Disable Security
-          spring.security.enabled=false
-          spring.security.user.name=none
-          spring.security.user.password=none
-          
-          # Documentation
-          springdoc.api-docs.enabled=true
-          springdoc.swagger-ui.enabled=true
+          spring.profiles.active=docs
           springdoc.swagger-ui.path=/swagger-ui.html
           springdoc.api-docs.path=/v3/api-docs
-          springdoc.packages-to-scan=org.noisevisionproductions.portfolio
-          
-          # Disable Features
-          spring.jpa.open-in-view=false
           spring.main.allow-bean-definition-overriding=true
           EOF
 
@@ -117,66 +89,43 @@ jobs:
           echo "Starting application..."
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
           echo "Using JAR file: $JAR_FILE"
-          
-          # Start with only docs profile
-          SPRING_CONFIG_LOCATION=file:./target/classes/application.properties,file:./target/classes/application-docs.properties \
-          SPRING_PROFILES_ACTIVE=docs \
-          SPRING_SECURITY_ENABLED=false \
           nohup java -jar "$JAR_FILE" \
             --spring.profiles.active=docs \
-            --spring.config.location=file:./target/classes/application.properties,file:./target/classes/application-docs.properties \
-            --spring.security.enabled=false \
+            --spring.config.additional-location=file:target/classes/application-docs.properties \
             > app.log 2>&1 &
           
+          # Debug: Check if file exists and show contents
+          echo "Checking config file..."
+          ls -la target/classes/application-docs.properties
+          cat target/classes/application-docs.properties
+          
           echo "Waiting for application to start (max 60 seconds)..."
-          attempt=1
-          while [ $attempt -le 30 ]; do
-            echo "Attempt $attempt of 30..."
+          for i in {1..30}; do
             if nc -z localhost ${{ env.APP_PORT }}; then
               echo "Application started successfully"
-              sleep 5  # Give it a few more seconds to initialize
               break
             fi
-            if [ $attempt -eq 30 ]; then
+            if [ $i -eq 30 ]; then
               echo "Application failed to start within timeout"
-              echo "Full application log:"
               cat app.log
               exit 1
             fi
-            attempt=$((attempt+1))
             sleep 2
           done
 
       - name: Verify API availability
         run: |
           echo "Verifying API docs endpoint..."
-          attempt=1
-          max_attempts=10
-          
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt of $max_attempts..."
-          
-            # Try with verbose output
-            response=$(curl -v -s "http://localhost:${{ env.APP_PORT }}/v3/api-docs" 2>&1)
-            status=$?
-          
-            if [ $status -eq 0 ]; then
+          for i in {1..5}; do
+            if curl -s -f "http://localhost:${{ env.APP_PORT }}/v3/api-docs" > /dev/null; then
               echo "API documentation endpoint is accessible"
               break
             fi
-          
-            echo "Curl response:"
-            echo "$response"
-          
-            if [ $attempt -eq $max_attempts ]; then
-              echo "API documentation endpoint is not accessible after $max_attempts attempts"
-              echo "Application logs:"
+            if [ $i -eq 5 ]; then
+              echo "API documentation endpoint is not accessible"
               cat backend/app.log
               exit 1
             fi
-          
-            echo "Retrying in 3 seconds..."
-            attempt=$((attempt+1))
             sleep 3
           done
 

@@ -1,12 +1,14 @@
 spring:
+  config:
+    activate:
+      on-profile: common
+
+---
+spring:
   profiles:
     group:
       dev: [ common ]
       docs: [ common, docs-specific ]
-
----
-spring:
-  profiles: common
 
   application:
     name: portfolio-backend
@@ -100,7 +102,9 @@ server:
 
 ---
 spring:
-  profiles: docs-specific
+  config:
+    activate:
+      on-profile: docs-specific
 
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

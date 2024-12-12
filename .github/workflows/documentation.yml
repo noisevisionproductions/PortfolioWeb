@@ -26,14 +26,14 @@ jobs:
       github.event.workflow_run.conclusion == 'failure'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           repository: ${{ github.event.workflow_run.head_repository.full_name }}
           ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
@@ -74,12 +74,13 @@ jobs:
       - name: Create application properties
         working-directory: ./backend
         run: |
-          mkdir -p $(dirname application-docs.properties)
-          cat > application-docs.properties << EOF
+          mkdir -p target/classes
+          cat > target/classes/application-docs.properties << EOF
           server.port=${{ env.APP_PORT }}
           spring.profiles.active=docs
           springdoc.swagger-ui.path=/swagger-ui.html
           springdoc.api-docs.path=/v3/api-docs
+          spring.main.allow-bean-definition-overriding=true
           EOF
 
       - name: Start Application
@@ -90,8 +91,13 @@ jobs:
           echo "Using JAR file: $JAR_FILE"
           nohup java -jar "$JAR_FILE" \
             --spring.profiles.active=docs \
-            --spring.config.location=file:./target/classes/application-docs.properties \
+            --spring.config.additional-location=file:target/classes/application-docs.properties \
             > app.log 2>&1 &
+          
+          # Debug: Check if file exists and show contents
+          echo "Checking config file..."
+          ls -la target/classes/application-docs.properties
+          cat target/classes/application-docs.properties
           
           echo "Waiting for application to start (max 60 seconds)..."
           for i in {1..30}; do
@@ -133,7 +139,7 @@ jobs:
             -Dspringdoc.outputDir=target/swagger-ui
 
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
 
       - name: Generate static documentation
         working-directory: ./backend/target/swagger-ui
@@ -177,7 +183,7 @@ jobs:
 
       - name: Upload Documentation Artifact
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: api-documentation
           path: backend/target/swagger-ui

@@ -111,12 +111,16 @@ jobs:
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
           echo "Using JAR file: $JAR_FILE"
           
-          # Run with debug to see what's happening
           nohup java -jar "$JAR_FILE" \
-            --spring.profiles.active=docs \
+            --spring.profiles.active=docs \  # This line activates the docs profile
             --spring.config.additional-location=file:target/classes/application-docs.properties \
             --debug \
             > app.log 2>&1 &
+
+      - name: Verify Application Startup
+        run: |
+          echo "Waiting for application to start..."
+          timeout 30 tail -f backend/app.log | grep -q "Started PortfolioApplication"
 
       - name: Verify API availability
         run: |

@@ -75,44 +75,41 @@ jobs:
         working-directory: ./backend
         run: |
           mkdir -p target/classes
-           cat > target/classes/application-docs.properties << EOF
-           # Server
-           server.port=${{ env.APP_PORT }}
-           spring.main.web-application-type=servlet
           
-           # Disable Security
-           spring.autoconfigure.exclude=\
-             org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,\
-             org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration,\
-             org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration,\
-             org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+          # Create base application.properties
+          cat > target/classes/application.properties << EOF
+          spring.profiles.default=docs
+          EOF
           
-           # Minimal Database Config
-           spring.datasource.driver-class-name=org.h2.Driver
-           spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
-           spring.datasource.username=sa
-           spring.datasource.password=
-           spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-           spring.jpa.hibernate.ddl-auto=create-drop
-           spring.jpa.show-sql=false
+          # Create docs-specific properties
+          cat > target/classes/application-docs.properties << EOF
+          # Server
+          server.port=${{ env.APP_PORT }}
           
-           # Disable Redis
-           spring.data.redis.repositories.enabled=false
-           spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+          # Database
+          spring.datasource.driver-class-name=org.h2.Driver
+          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+          spring.datasource.username=sa
+          spring.datasource.password=
+          spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+          spring.jpa.hibernate.ddl-auto=create-drop
           
-           # Documentation Settings
-           springdoc.api-docs.enabled=true
-           springdoc.swagger-ui.enabled=true
-           springdoc.swagger-ui.path=/swagger-ui.html
-           springdoc.api-docs.path=/v3/api-docs
-           springdoc.packages-to-scan=org.noisevisionproductions.portfolio
-           springdoc.paths-to-match=/**
+          # Disable Security
+          spring.security.enabled=false
+          spring.security.user.name=none
+          spring.security.user.password=none
           
-           # Disable other features
-           spring.main.allow-bean-definition-overriding=true
-           spring.main.allow-circular-references=true
-           spring.jmx.enabled=false
-           EOF
+          # Documentation
+          springdoc.api-docs.enabled=true
+          springdoc.swagger-ui.enabled=true
+          springdoc.swagger-ui.path=/swagger-ui.html
+          springdoc.api-docs.path=/v3/api-docs
+          springdoc.packages-to-scan=org.noisevisionproductions.portfolio
+          
+          # Disable Features
+          spring.jpa.open-in-view=false
+          spring.main.allow-bean-definition-overriding=true
+          EOF
 
       - name: Start Application
         working-directory: ./backend
@@ -121,35 +118,33 @@ jobs:
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
           echo "Using JAR file: $JAR_FILE"
           
-          # Start with explicit disable flags
+          # Start with only docs profile
+          SPRING_CONFIG_LOCATION=file:./target/classes/application.properties,file:./target/classes/application-docs.properties \
+          SPRING_PROFILES_ACTIVE=docs \
+          SPRING_SECURITY_ENABLED=false \
           nohup java -jar "$JAR_FILE" \
-           --spring.profiles.active=docs \
-           --spring.config.location=file:./target/classes/application-docs.properties \
-           --spring.security.enabled=false \
-           --spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration \
-           > app.log 2>&1 &
-          
-          # Add more debugging
-          echo "Configuration file contents:"
-          cat target/classes/application-docs.properties
+            --spring.profiles.active=docs \
+            --spring.config.location=file:./target/classes/application.properties,file:./target/classes/application-docs.properties \
+            --spring.security.enabled=false \
+            > app.log 2>&1 &
           
           echo "Waiting for application to start (max 60 seconds)..."
           attempt=1
           while [ $attempt -le 30 ]; do
-           echo "Attempt $attempt of 30..."
-           if nc -z localhost ${{ env.APP_PORT }}; then
-             echo "Application started successfully"
-             sleep 5  # Give it a few more seconds to fully initialize
-             break
-           fi
-           if [ $attempt -eq 30 ]; then
-             echo "Application failed to start within timeout"
-             echo "Full application log:"
-             cat app.log
-             exit 1
-           fi
-           attempt=$((attempt+1))
-           sleep 2
+            echo "Attempt $attempt of 30..."
+            if nc -z localhost ${{ env.APP_PORT }}; then
+              echo "Application started successfully"
+              sleep 5  # Give it a few more seconds to initialize
+              break
+            fi
+            if [ $attempt -eq 30 ]; then
+              echo "Application failed to start within timeout"
+              echo "Full application log:"
+              cat app.log
+              exit 1
+            fi
+            attempt=$((attempt+1))
+            sleep 2
           done
 
       - name: Verify API availability

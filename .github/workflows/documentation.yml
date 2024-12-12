@@ -94,7 +94,6 @@ jobs:
             --spring.config.additional-location=file:target/classes/application-docs.properties \
             > app.log 2>&1 &
           
-          # Debug: Check if file exists and show contents
           echo "Checking config file..."
           ls -la target/classes/application-docs.properties
           cat target/classes/application-docs.properties

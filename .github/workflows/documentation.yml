@@ -96,18 +96,11 @@ jobs:
               host: localhost
               port: 6379
           
-            security:
-              jwt:
-                secret-key: ${JWT_SECRET:-testsecretkey123456789012345678901234567890}
-                expiration: 86400000
-                refresh-token:
-                  expiration: 604800000
-          
-            springdoc:
-              swagger-ui:
-                path: /swagger-ui.html
-              api-docs:
-                path: /v3/api-docs
+            application:
+              security:
+                jwt:
+                  secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+                  expiration: 86400000
           
           server:
             port: ${APP_PORT}
@@ -123,11 +116,12 @@ jobs:
           nohup java -jar "$JAR_FILE" \
             --spring.profiles.active=docs \
             --spring.config.location=file:target/classes/application.yml \
+            --application.security.jwt.secret-key=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970 \
             > app.log 2>&1 &
           
-          # Wait for application to start
+          # Dodajemy dłuższe oczekiwanie na start aplikacji
           echo "Waiting for application to start..."
-          sleep 10
+          sleep 20
 
       - name: Verify API availability
         run: |

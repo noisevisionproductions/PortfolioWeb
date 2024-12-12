@@ -1,8 +1,8 @@
 spring:
   profiles:
     group:
-      dev: [common]
-      docs: [common, docs-specific]
+      dev: [ common ]
+      docs: [ common, docs-specific ]
 
 ---
 spring:

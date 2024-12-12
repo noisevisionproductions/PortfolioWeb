@@ -75,33 +75,51 @@ jobs:
         working-directory: ./backend
         run: |
           mkdir -p target/classes
-          cat > target/classes/application-docs.properties << EOF
-          server.port=${{ env.APP_PORT }}
-          spring.profiles.active=docs
-
-          # Database Configuration
-          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-          spring.datasource.username=sa
-          spring.datasource.password=password
-          spring.datasource.driver-class-name=org.h2.Driver
+          cat > target/classes/application.yml << EOF
+          spring:
+            profiles:
+              active: docs
+              group:
+                docs: [common, docs-specific]
           
-          # JPA Configuration
-          spring.jpa.hibernate.ddl-auto=create-drop
-          spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+            # Common configuration
+            application:
+              name: portfolio-backend
           
-          # Redis Configuration
-          spring.redis.host=localhost
-          spring.redis.port=6379
+            # Docs specific configuration  
+            datasource:
+              url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+              username: sa
+              password: password
+              driver-class-name: org.h2.Driver
           
-          # Security Configuration
-          application.security.jwt.secret-key=${{ secrets.JWT_SECRET || 'testsecretkey123456789012345678901234567890' }}
-          application.security.jwt.expiration=86400000
-          application.security.jwt.refresh-token.expiration=604800000
+            jpa:
+              hibernate:
+                ddl-auto: create-drop
+              database-platform: org.hibernate.dialect.H2Dialect
           
-          # Documentation Configuration
-          springdoc.swagger-ui.path=/swagger-ui.html
-          springdoc.api-docs.path=/v3/api-docs
-          spring.main.allow-bean-definition-overriding=true
+            redis:
+              host: localhost
+              port: 6379
+              database: 1
+          
+            # Security  
+            security:
+              jwt:
+                secret-key: ${JWT_SECRET:-testsecretkey123456789012345678901234567890}
+                expiration: 86400000
+                refresh-token:
+                  expiration: 604800000
+          
+            # Documentation
+            springdoc:
+              swagger-ui:
+                path: /swagger-ui.html
+              api-docs:
+                path: /v3/api-docs
+          
+          server:
+            port: ${APP_PORT}
           EOF
 
       - name: Start Application
@@ -111,11 +129,8 @@ jobs:
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
           echo "Using JAR file: $JAR_FILE"
           
-          # Run with debug to see what's happening
           nohup java -jar "$JAR_FILE" \
-            --spring.profiles.active=docs \
-            --spring.config.additional-location=file:target/classes/application-docs.properties \
-            --debug \
+            --spring.config.location=file:target/classes/application.yml \
             > app.log 2>&1 &
 
       - name: Verify API availability
@@ -133,6 +148,12 @@ jobs:
             fi
             sleep 3
           done
+
+      - name: Check logs on failure
+        if: failure()
+        run: |
+          echo "Application logs:"
+          cat backend/app.log
 
       - name: Generate OpenAPI Documentation
         working-directory: ./backend

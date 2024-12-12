@@ -78,6 +78,27 @@ jobs:
           cat > target/classes/application-docs.properties << EOF
           server.port=${{ env.APP_PORT }}
           spring.profiles.active=docs
+
+          # Database Configuration
+          spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+          spring.datasource.username=sa
+          spring.datasource.password=password
+          spring.datasource.driver-class-name=org.h2.Driver
+          
+          # JPA Configuration
+          spring.jpa.hibernate.ddl-auto=create-drop
+          spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+          
+          # Redis Configuration
+          spring.redis.host=localhost
+          spring.redis.port=6379
+          
+          # Security Configuration
+          application.security.jwt.secret-key=${{ secrets.JWT_SECRET || 'testsecretkey123456789012345678901234567890' }}
+          application.security.jwt.expiration=86400000
+          application.security.jwt.refresh-token.expiration=604800000
+          
+          # Documentation Configuration
           springdoc.swagger-ui.path=/swagger-ui.html
           springdoc.api-docs.path=/v3/api-docs
           spring.main.allow-bean-definition-overriding=true
@@ -89,28 +110,13 @@ jobs:
           echo "Starting application..."
           JAR_FILE=$(find target -name "*.jar" -type f | head -n 1)
           echo "Using JAR file: $JAR_FILE"
+          
+          # Run with debug to see what's happening
           nohup java -jar "$JAR_FILE" \
             --spring.profiles.active=docs \
             --spring.config.additional-location=file:target/classes/application-docs.properties \
+            --debug \
             > app.log 2>&1 &
-          
-          echo "Checking config file..."
-          ls -la target/classes/application-docs.properties
-          cat target/classes/application-docs.properties
-          
-          echo "Waiting for application to start (max 60 seconds)..."
-          for i in {1..30}; do
-            if nc -z localhost ${{ env.APP_PORT }}; then
-              echo "Application started successfully"
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "Application failed to start within timeout"
-              cat app.log
-              exit 1
-            fi
-            sleep 2
-          done
 
       - name: Verify API availability
         run: |

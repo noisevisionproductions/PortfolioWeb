@@ -1,18 +1,7 @@
 spring:
-  config:
-    activate:
-      on-profile: common
-
----
-spring:
-  profiles:
-    group:
-      dev: [ common ]
-      docs: [ common, docs-specific ]
-
   application:
     name: portfolio-backend
-
+  
   datasource:
     url: ${PG_URL}
     username: ${PG_USERNAME}
@@ -42,7 +31,7 @@ spring:
       file-size-threshold: 2KB
       max-file-size: 10MB
       max-request-size: 10MB
-
+  
   web:
     resources:
       static-locations: classpath:/static/,file:${file.upload-dir}/
@@ -54,7 +43,7 @@ spring:
       allowed-headers: '*'
       allow-credentials: true
       max-age: 3600
-
+  
   output:
     ansi:
       enabled: ALWAYS
@@ -79,11 +68,16 @@ file:
   upload-dir: ./uploads
 
 springdoc:
+  show-actuator: true
   swagger-ui:
+    enabled: true
+    csrf:
+      enabled: true
     path: /swagger-ui.html
     operationsSorter: method
     tagsSorter: alpha
   api-docs:
+    enabled: true
     path: /api-docs
 
 application:
@@ -99,32 +93,3 @@ server:
     include-message: always
     include-binding-errors: always
     include-stacktrace: never
-
----
-spring:
-  config:
-    activate:
-      on-profile: docs-specific
-
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
-
-  redis:
-    database: 1
-
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-
-  springdoc:
-    api-docs:
-      path: /v3/api-docs
-
-application:
-  security:
-    jwt:
-      secret-key: ${JWT_SECRET_KEY:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-      expiration: ${JWT_EXPIRATION:86400000}

@@ -3,6 +3,7 @@ package org.noisevisionproductions.portfolio.intergration.project;
 import org.junit.jupiter.api.*;
 import org.mockito.MockitoAnnotations;
 import org.noisevisionproductions.portfolio.cache.service.project.ProjectCacheService;
+import org.noisevisionproductions.portfolio.intergration.config.TestKafkaConfig;
 import org.noisevisionproductions.portfolio.intergration.config.TestRedisConfiguration;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectImageDTO;
@@ -29,7 +30,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(TestRedisConfiguration.class)
+@Import({TestRedisConfiguration.class, TestKafkaConfig.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ProjectImageServiceIntegrationTest {
 

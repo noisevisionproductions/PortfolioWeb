@@ -4,6 +4,16 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
+
+  spring:
+    kafka:
+      enabled: false
+      bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -12,8 +22,10 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+
   redis:
     enabled: false
+
   main:
     allow-bean-definition-overriding: true
 

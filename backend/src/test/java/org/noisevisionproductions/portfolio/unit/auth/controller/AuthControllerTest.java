@@ -1,17 +1,15 @@
 package org.noisevisionproductions.portfolio.unit.auth.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.noisevisionproductions.portfolio.auth.controller.AuthController;
 import org.noisevisionproductions.portfolio.auth.dto.AuthResponse;
@@ -19,8 +17,9 @@ import org.noisevisionproductions.portfolio.auth.dto.LoginRequest;
 import org.noisevisionproductions.portfolio.auth.dto.RegisterRequest;
 import org.noisevisionproductions.portfolio.auth.dto.UserInfoResponse;
 import org.noisevisionproductions.portfolio.auth.model.UserModel;
-import org.noisevisionproductions.portfolio.auth.service.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.noisevisionproductions.portfolio.auth.service.LoginService;
+import org.noisevisionproductions.portfolio.auth.service.RegistrationService;
+import org.noisevisionproductions.portfolio.auth.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -36,7 +35,16 @@ class AuthControllerTest {
     private Validator validator;
 
     @Mock
-    private AuthService baseAuthService;
+    private LoginService baseLoginService;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private RegistrationService registrationService;
+
+    @Mock
+    private HttpServletRequest request;
 
     @InjectMocks
     private AuthController authController;
@@ -49,7 +57,7 @@ class AuthControllerTest {
 
     @Test
     void register_ShouldReturnSuccessResponse_WhenValidRequest() {
-        RegisterRequest request = new RegisterRequest(
+        RegisterRequest registerRequest = new RegisterRequest(
                 "test@example.com",
                 "password123",
                 "John Doe",
@@ -59,15 +67,15 @@ class AuthControllerTest {
 
         AuthResponse expectedResponse = new AuthResponse(
                 "jwt-token",
-                request.email(),
+                registerRequest.email(),
                 "USER",
                 Set.of("ROLE_USER")
         );
 
-        when(baseAuthService.register(any(RegisterRequest.class)))
+        when(registrationService.register(registerRequest, request))
                 .thenReturn(expectedResponse);
 
-        ResponseEntity<AuthResponse> response = authController.register(request);
+        ResponseEntity<AuthResponse> response = authController.register(registerRequest);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -76,7 +84,7 @@ class AuthControllerTest {
         assertThat(response.getBody().role()).isEqualTo(expectedResponse.role());
         assertThat(response.getBody().authorities()).isEqualTo(expectedResponse.authorities());
 
-        verify(baseAuthService, times(1)).register(request);
+        verify(registrationService, times(1)).register(registerRequest, request);
     }
 
     @Test
@@ -107,7 +115,7 @@ class AuthControllerTest {
                 Set.of("ROLE_USER")
         );
 
-        when(baseAuthService.login(any(LoginRequest.class)))
+        when(baseLoginService.login(any(LoginRequest.class)))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<AuthResponse> response = authController.login(request);
@@ -119,7 +127,7 @@ class AuthControllerTest {
         assertThat(response.getBody().role()).isEqualTo(expectedResponse.role());
         assertThat(response.getBody().authorities()).isEqualTo(expectedResponse.authorities());
 
-        verify(baseAuthService, times(1)).login(request);
+        verify(baseLoginService, times(1)).login(request);
     }
 
     @Test
@@ -136,7 +144,7 @@ class AuthControllerTest {
                 Set.of("Java", "JS")
         );
 
-        when(baseAuthService.getCurrentUserInfo(userEmail))
+        when(userService.getCurrentUserInfo(userEmail))
                 .thenReturn(expectedResponse);
 
         ResponseEntity<UserInfoResponse> response = authController.getCurrentUser(userModel);
@@ -150,7 +158,7 @@ class AuthControllerTest {
         assertThat(response.getBody().companyName()).isEqualTo(expectedResponse.companyName());
         assertThat(response.getBody().programmingLanguages()).isEqualTo(expectedResponse.programmingLanguages());
 
-        verify(baseAuthService, times(1)).getCurrentUserInfo(userEmail);
+        verify(userService, times(1)).getCurrentUserInfo(userEmail);
     }
 
     @Test
@@ -160,6 +168,6 @@ class AuthControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody()).isNull();
 
-        verify(baseAuthService, never()).getCurrentUserInfo(any());
+        verify(userService, never()).getCurrentUserInfo(any());
     }
 }

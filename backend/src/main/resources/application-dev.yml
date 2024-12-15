@@ -14,6 +14,16 @@ spring:
     timeout: 60000
     serializer: org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      retries: 3
+      batch-size: 16384
+      buffer-memory: 33554432
+    consumer:
+      group-id: portfolio-group
+      auto-offset-reset: earliest
+
   jpa:
     open-in-view: false
     hibernate:

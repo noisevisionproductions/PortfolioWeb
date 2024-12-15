@@ -21,6 +21,7 @@ import java.util.List;
 @Slf4j
 public class ProjectService {
     private static final Long ALL_PROJECTS_KEY = 0L;
+    private static final String LOG_INIT_ERROR = "Error initializing collections for project {}: {}";
 
     private final ProjectRepository projectRepository;
     private final FileStorageService fileStorageService;
@@ -40,7 +41,7 @@ public class ProjectService {
 
         projectCacheService.cache(project.getId(), project);
         projectCacheService.invalidate(ALL_PROJECTS_KEY);
-        log.info("Project with ID {} has been created and cached.", project.getId());
+
         return project;
     }
 
@@ -51,7 +52,7 @@ public class ProjectService {
         Project updatedProject = projectRepository.save(existingProject);
         projectCacheService.cache(id, updatedProject);
         projectCacheService.invalidate(ALL_PROJECTS_KEY);
-        log.info("Project with ID {} has been updated and cached.", id);
+
         return updatedProject;
     }
 
@@ -63,7 +64,6 @@ public class ProjectService {
             return cachedProjects;
         }
 
-        log.info("Cache miss or empty - fetching from database");
         List<Project> projects = projectRepository.findAll();
 
         projects.forEach(project -> {
@@ -73,7 +73,7 @@ public class ProjectService {
                 Hibernate.initialize(project.getFeatures());
                 Hibernate.initialize(project.getTechnologies());
             } catch (Exception e) {
-                log.error("Error initializing collections for project {}: {}", project.getId(), e.getMessage());
+                log.error(LOG_INIT_ERROR, project.getId(), e.getMessage());
             }
         });
 
@@ -88,37 +88,57 @@ public class ProjectService {
     public Project getProjectById(Long id) {
         Project cachedProject = projectCacheService.get(id);
         if (cachedProject != null) {
-            log.info("Returning project with ID {} from cache.", id);
-            return cachedProject;
+            try {
+                Hibernate.initialize(cachedProject.getProjectImages());
+                Hibernate.initialize(cachedProject.getContributors());
+                Hibernate.initialize(cachedProject.getFeatures());
+                Hibernate.initialize(cachedProject.getTechnologies());
+
+                return cachedProject;
+            } catch (Exception e) {
+                log.error(LOG_INIT_ERROR, id, e.getMessage());
+            }
         }
-        log.info("Cache miss for project with ID {}. Fetching from database.", id);
+
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException("Project not found with id: " + id));
 
-        projectCacheService.cache(id, project);
-        log.info("Project with ID {} has been cached.", id);
+        try {
+            Hibernate.initialize(project.getProjectImages());
+            Hibernate.initialize(project.getContributors());
+            Hibernate.initialize(project.getFeatures());
+            Hibernate.initialize(project.getTechnologies());
+            projectCacheService.cache(id, project);
+            log.info("Project with ID {} has been cached.", id);
+        } catch (Exception e) {
+            log.error(LOG_INIT_ERROR, id, e.getMessage());
+        }
+
         return project;
     }
 
     @Transactional(readOnly = true)
     public Project getProjectBySlug(String slug) {
-        log.info("Fetching project by slug: {}", slug);
         Project project = projectRepository.findBySlug(slug)
                 .orElseThrow(() -> new RuntimeException("Project not found with slug: " + slug));
 
-        Hibernate.initialize(project.getFeatures());
-        Hibernate.initialize(project.getTechnologies());
-        Hibernate.initialize(project.getContributors());
-        Hibernate.initialize(project.getProjectImages());
+        try {
+            Hibernate.initialize(project.getFeatures());
+            Hibernate.initialize(project.getTechnologies());
+            Hibernate.initialize(project.getContributors());
+            Hibernate.initialize(project.getProjectImages());
+        } catch (Exception e) {
+            log.error("Error initializing collections for project with slug {}: {}", slug, e.getMessage());
+        }
 
-        Project cachedProject = projectCacheService.get(project.getId());
+        Long projectId = project.getId();
+        Project cachedProject = projectCacheService.get(projectId);
         if (cachedProject != null) {
-            log.info("Returning project with slug '{}' (ID {}) from cache.", slug, project.getId());
+            log.info("Returning project with slug '{}' (ID {}) from cache.", slug, projectId);
             return cachedProject;
         }
 
-        log.info("Cache miss for project with slug '{}'. Caching project with ID {}.", slug, project.getId());
-        projectCacheService.cache(project.getId(), project);
+        projectCacheService.cache(projectId, project);
         return project;
     }
 

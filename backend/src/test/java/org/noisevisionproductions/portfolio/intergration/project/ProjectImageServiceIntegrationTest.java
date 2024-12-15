@@ -1,7 +1,9 @@
 package org.noisevisionproductions.portfolio.intergration.project;
 
 import org.junit.jupiter.api.*;
+import org.mockito.MockitoAnnotations;
 import org.noisevisionproductions.portfolio.cache.service.project.ProjectCacheService;
+import org.noisevisionproductions.portfolio.intergration.config.TestRedisConfiguration;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectImageDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.model.ImageFromProject;
@@ -13,9 +15,10 @@ import org.noisevisionproductions.portfolio.projectsManagement.service.ProjectIm
 import org.noisevisionproductions.portfolio.projectsManagement.service.mainProjectService.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -26,33 +29,33 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestRedisConfiguration.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ProjectImageServiceIntegrationTest {
 
     @Autowired
-    private ProjectImageService projectImageService;
+    private ProjectRepository projectRepository;
+
+    @MockitoBean
+    private ProjectCacheService projectCacheService;
+
+    @MockitoBean
+    private FileStorageService fileStorageService;
 
     @Autowired
     private ProjectService projectService;
 
-    @Autowired
-    private ProjectRepository projectRepository;
-
-    @MockBean
-    private FileStorageService fileStorageService;
-
-    @MockBean
-    private ProjectCacheService projectCacheService;
-
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    @MockitoSpyBean
+    private ProjectImageService projectImageService;
 
     private Project testProject;
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+
         projectRepository.deleteAll();
-        clearInvocations(projectCacheService);
 
         ProjectDTO projectDTO = new ProjectDTO();
         projectDTO.setName("Test Integration Project");
@@ -66,7 +69,6 @@ public class ProjectImageServiceIntegrationTest {
         testProject = projectService.createProject(projectDTO);
         clearInvocations(projectCacheService);
     }
-
 
     @Test
     @Transactional

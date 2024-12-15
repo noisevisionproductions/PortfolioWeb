@@ -31,8 +31,11 @@ public class ProjectCacheService implements CacheService<Long, Project> {
             String key = keyGenerator.generateKey(CACHE_PREFIX, "all");
             Object cached = redisTemplate.opsForValue().get(key);
             if (cached instanceof CacheableProjectsList) {
-                return ((CacheableProjectsList) cached).toEntity();
+                List<Project> projects = ((CacheableProjectsList) cached).toEntity();
+                log.debug("Retrieved {} projects from cache", projects.size());
+                return projects;
             }
+            log.debug("No projects found in cache or invalid cache type");
         } catch (Exception e) {
             log.error("Failed to get cached projects list", e);
         }

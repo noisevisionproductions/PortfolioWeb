@@ -129,6 +129,7 @@ export const translations = {
                 saveImage: "Zapisz obraz",
                 fetchError: "Nie udało się pobrać danych projektu",
                 successTitle: "Projekt został stworzony",
+                successDescription: "Projekt utworzony, kliknij OK, aby przejść do menu głównego",
                 projectForm: "Zostaniesz przeniesiony do Menu Głównego"
             },
             projectDetails: {
@@ -279,7 +280,8 @@ export const translations = {
                 createCaption: "Add caption for image...",
                 saveImage: "Save image",
                 fetchError: "Failed to get project data",
-                SuccessTitle: "Project has been created",
+                successTitle: "Project has been created",
+                successDescription: "Project created, click OK to switch to Main Menu",
                 projectForm: "You will be taken to the Main Menu"
             },
             projectDetails: {

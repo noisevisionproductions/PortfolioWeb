@@ -58,20 +58,29 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public List<Project> getAllProjects() {
         List<Project> cachedProjects = projectCacheService.getCachedProjectsList();
-        if (cachedProjects != null) {
-            log.info("Returning all projects from cache.");
+        if (cachedProjects != null && !cachedProjects.isEmpty()) {
+            log.info("Returning {} projects from cache.", cachedProjects.size());
             return cachedProjects;
         }
-        log.info("Cache miss for all projects. Fetching from database.");
+
+        log.info("Cache miss or empty - fetching from database");
         List<Project> projects = projectRepository.findAll();
+
         projects.forEach(project -> {
-            Hibernate.initialize(project.getProjectImages());
-            Hibernate.initialize(project.getContributors());
-            Hibernate.initialize(project.getFeatures());
-            Hibernate.initialize(project.getTechnologies());
+            try {
+                Hibernate.initialize(project.getProjectImages());
+                Hibernate.initialize(project.getContributors());
+                Hibernate.initialize(project.getFeatures());
+                Hibernate.initialize(project.getTechnologies());
+            } catch (Exception e) {
+                log.error("Error initializing collections for project {}: {}", project.getId(), e.getMessage());
+            }
         });
-        projectCacheService.cacheProjectsList(projects);
-        log.info("All projects have been cached.");
+
+        if (!projects.isEmpty()) {
+            log.info("Caching {} projects", projects.size());
+            projectCacheService.cacheProjectsList(projects);
+        }
         return projects;
     }
 

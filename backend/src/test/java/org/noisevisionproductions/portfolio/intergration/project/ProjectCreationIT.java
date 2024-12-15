@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,6 +60,11 @@ public class ProjectCreationIT extends BaseIntegrationTest {
         projectDTO.setFeatures(new ArrayList<>());
         projectDTO.setTechnologies(new ArrayList<>());
         projectDTO.setContributors(new ArrayList<>());
+
+        Date now = new Date();
+        projectDTO.setStartDate(now);
+        projectDTO.setEndDate(now);
+
         return projectDTO;
     }
 
@@ -159,8 +165,11 @@ public class ProjectCreationIT extends BaseIntegrationTest {
 
         assertThat(retrievedProject)
                 .usingRecursiveComparison()
-                .ignoringFields("createdAt", "lastModifiedAt")
+                .ignoringFields("createdAt", "lastModifiedAt", "startDate", "endDate")
                 .isEqualTo(createdProject);
+
+        assertThat(retrievedProject.getStartDate()).isNotNull();
+        assertThat(retrievedProject.getEndDate()).isNotNull();
 
         Project cachedProject = projectCacheService.get(createdProject.getId());
         assertThat(cachedProject).isNotNull();

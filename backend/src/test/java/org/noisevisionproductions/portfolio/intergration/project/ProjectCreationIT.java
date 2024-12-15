@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.noisevisionproductions.portfolio.cache.service.project.ProjectCacheService;
 import org.noisevisionproductions.portfolio.intergration.config.BaseIntegrationTest;
-import org.noisevisionproductions.portfolio.intergration.config.TestKafkaConfig;
+import org.noisevisionproductions.portfolio.intergration.config.KafkaTestConfig;
 import org.noisevisionproductions.portfolio.intergration.config.TestRedisConfiguration;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectImageDTO;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import({TestRedisConfiguration.class, TestKafkaConfig.class})
+@Import({TestRedisConfiguration.class, KafkaTestConfig.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ProjectCreationIT extends BaseIntegrationTest {
 

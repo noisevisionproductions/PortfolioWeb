@@ -22,6 +22,11 @@ public class KafkaConsumerService {
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void handleUserRegistration(@Payload UserRegistrationEvent event) {
+        if (event == null) {
+            log.warn("Received null registration event");
+            return;
+        }
+
         try {
             log.info("Received registration event for user: {}", event.getEmail());
 

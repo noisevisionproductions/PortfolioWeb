@@ -17,6 +17,11 @@ public class KafkaProducerService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void sendRegistrationEvent(UserRegistrationEvent event) {
+        if (event == null) {
+            log.warn("Attempted to send null registration event");
+            return;
+        }
+
         CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
                 "user-registration-events",
                 event.getUserId(),

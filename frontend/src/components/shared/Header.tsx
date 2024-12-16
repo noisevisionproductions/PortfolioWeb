@@ -15,6 +15,7 @@ interface HeaderProps {
         contact?: string;
         login: string;
         logout?: string;
+        kafkaDashboard?: string
     }
 }
 
@@ -74,8 +75,7 @@ export const Header: React.FC<HeaderProps> = ({title, navigation}) => {
                                         {navigation.addProject}
                                     </button>
                                 )}
-                                <a href="#projects" onClick={(e) => scrollToSection(e, 'projects')}
-                                   className="text-gray-700 hover:text-gray-900">{navigation.projects}</a>
+
                                 <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}
                                    className="text-gray-700 hover:text-gray-900">{navigation.contact}</a>
                                 <button

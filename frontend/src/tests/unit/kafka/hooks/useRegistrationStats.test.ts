@@ -78,7 +78,7 @@ describe('useRegistrationStats', () => {
         const {result} = renderHook(() => useRegistrationStats());
 
         await waitFor(() => {
-            expect(result.current.error).toBe('kafka.errors.stats.statsFetchFailed');
+            expect(result.current.error).toBe('kafka.errors.statsFetchFailed');
             expect(result.current.loading).toBe(false);
         });
 
@@ -130,7 +130,7 @@ describe('useRegistrationStats', () => {
             await result.current.fetchRecentEvents();
         });
 
-        expect(result.current.error).toBe('kafka.errors.stats.recentRegistrationsFetchFailed');
+        expect(result.current.error).toBe('kafka.errors.registrationsForPeriodFetchFailed');
         expect(result.current.loading).toBe(false);
         expect(console.error).toHaveBeenCalled();
     });
@@ -147,7 +147,7 @@ describe('useRegistrationStats', () => {
             await result.current.fetchRegistrationsForPeriod(startDate, endDate);
         });
 
-        expect(result.current.error).toBe('kafka.errors.stats.registrationsForPeriodFetchFailed');
+        expect(result.current.error).toBe('kafka.errors.registrationsForPeriodFetchFailed');
         expect(result.current.loading).toBe(false);
         expect(console.error).toHaveBeenCalled();
     });

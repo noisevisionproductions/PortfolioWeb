@@ -8,6 +8,7 @@ import {RegisterPage} from "./auth/components/register/RegisterPage";
 import ProtectedLoginRoute from "./auth/components/login/ProtectedLoginRoute";
 import {MainContent} from "./App";
 import React from 'react';
+import {KafkaDashboard} from "@/kafka/components/dashboard/KafkaDashboard";
 
 export const routes = (
     <React.Fragment>
@@ -28,6 +29,13 @@ export const routes = (
                element={
                    <ProtectedRoute requiredAuthorities={[Authority.EDIT_PROJECTS]}>
                        <ProjectFormPage/>
+                   </ProtectedRoute>
+               }
+        />
+        <Route path="/kafka-dashboard"
+               element={
+                   <ProtectedRoute requiredAuthorities={[Authority.ACCESS_KAFKA_DASHBOARD]}>
+                       <KafkaDashboard/>
                    </ProtectedRoute>
                }
         />

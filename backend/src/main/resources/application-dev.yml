@@ -15,14 +15,21 @@ spring:
     serializer: org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:29092
     producer:
       retries: 3
       batch-size: 16384
       buffer-memory: 33554432
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: portfolio-group
       auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: event:org.noisevisionproductions.portfolio.kafka.event.dto.UserRegistrationEvent
 
   jpa:
     open-in-view: false

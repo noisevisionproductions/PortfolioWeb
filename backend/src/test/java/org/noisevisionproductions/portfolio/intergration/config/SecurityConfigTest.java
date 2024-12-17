@@ -25,7 +25,7 @@ public class SecurityConfigTest {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/kafka/stats/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/kafka/stats/**").hasAuthority("ACCESS_KAFKA_DASHBOARD")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exceptions -> exceptions

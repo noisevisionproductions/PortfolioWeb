@@ -15,6 +15,7 @@ public enum Role {
             authorities.add(Authority.CREATE_PROJECTS);
             authorities.add(Authority.EDIT_PROJECTS);
             authorities.add(Authority.DELETE_PROJECTS);
+            authorities.add(Authority.ACCESS_KAFKA_DASHBOARD);
         }
 
         return authorities;

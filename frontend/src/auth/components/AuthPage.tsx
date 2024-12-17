@@ -1,5 +1,5 @@
 import React from 'react';
-import {Header} from "../../components/shared/Header";
+import {Header} from "@/components/shared/Header";
 
 interface AuthPageProps {
     children: React.ReactNode;

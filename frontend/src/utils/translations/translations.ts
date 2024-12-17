@@ -33,7 +33,8 @@ export const translations = {
                 projects: "Projekty",
                 contact: "Kontakt",
                 login: "Zaloguj się",
-                logout: "Wyloguj się"
+                logout: "Wyloguj się",
+                kafkaDashboard: "Kafka"
             }
         },
         login: {
@@ -154,6 +155,28 @@ export const translations = {
                 statsFetchFailed: "Błąd podczas pobierania statystyk",
                 recentRegistrationsFetchFailed: "Błąd podczas pobierania ostatnich rejestracji",
                 registrationsForPeriodFetchFailed: "Błąd podczas pobierania rejestracji z wybranego okresu"
+            },
+            dashboard: {
+                title: 'Panel statystyk rejestracji',
+                chart: {
+                    title: 'Statystyki rejestracji (7 dni)'
+                },
+                recent: {
+                    title: 'Ostatnie rejestracje'
+                }
+            },
+            stats: {
+                total: 'Wszystkie rejestracje',
+                successful: 'Udane rejestracje',
+                failed: 'Nieudane rejestracje',
+                successRate: 'Wskaźnik sukcesu'
+            },
+            table: {
+                status: 'Status',
+                email: 'Email',
+                date: 'Data',
+                source: 'Źródło',
+                noData: 'Brak danych do wyświetlenia'
             }
         }
     },
@@ -191,8 +214,10 @@ export const translations = {
                 projects: "Projects",
                 contact: "Contact",
                 login: "Log in",
-                logout: "Log out"
+                logout: "Log out",
+                kafkaDashboard: "Kafka"
             }
+
         },
         login: {
             email: "Enter e-mail",
@@ -314,6 +339,28 @@ export const translations = {
                 recentRegistrationsFetchFailed: "Error fetching recent events",
                 registrationsForPeriodFetchFailed: "Error fetching period events"
             }
+        },
+        dashboard: {
+            title: 'Registration Statistics Dashboard',
+            chart: {
+                title: 'Registration Statistics (7 days)'
+            },
+            recent: {
+                title: 'Recent Registrations'
+            }
+        },
+        stats: {
+            total: 'Total Registrations',
+            successful: 'Successful Registrations',
+            failed: 'Failed Registrations',
+            successRate: 'Success Rate'
+        },
+        table: {
+            status: 'Status',
+            email: 'Email',
+            date: 'Date',
+            source: 'Source',
+            noData: 'No data to display'
         }
     }
 };

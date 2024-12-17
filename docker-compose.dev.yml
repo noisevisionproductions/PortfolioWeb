@@ -35,15 +35,12 @@ services:
       - POSTGRES_USER=${PG_USERNAME}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
     volumes:
-      - type: volume
-        source: postgres_data
-        target: /var/lib/postgresql/data
-        volume:
-          nocopy: true
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - portfolio-network
+    restart: unless-stopped
 
   redis:
     image: redis:alpine
@@ -66,6 +63,49 @@ services:
     tmpfs:
       - /tmp
       - /var/run/redis
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: portfolio-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 20000
+    healthcheck:
+      test: echo stat | nc localhost 2181 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: portfolio-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: nc -z kafka 29092 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - portfolio-network
+    restart: unless-stopped
 
   backend:
     build:
@@ -78,6 +118,10 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      zookeeper:
         condition: service_healthy
     environment:
       - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0
@@ -102,6 +146,7 @@ services:
           memory: 8G
         reservations:
           memory: 2G
+    restart: unless-stopped
 
   frontend:
     build:
@@ -128,12 +173,17 @@ services:
           memory: 4G
         reservations:
           memory: 1G
+    restart: unless-stopped
 
 networks:
   portfolio-network:
+    name: portfolio-network
     driver: bridge
 
 volumes:
-  npm_cache:
   postgres_data:
+    name: postgres_data
   backend_maven_cache:
+    name: backend_maven_cache
+  npm_cache:
+    name: npm_cache

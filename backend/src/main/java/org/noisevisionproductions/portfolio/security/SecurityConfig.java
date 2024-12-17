@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers("/api/errors/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
-                        .requestMatchers("/api/kafka/**").hasAuthority("ADMIN")
+                        .requestMatchers("/api/kafka/**").hasAuthority("ACCESS_KAFKA_DASHBOARD")
                         .requestMatchers(HttpMethod.POST, "/api/projects/**").hasAuthority("CREATE_PROJECTS")
                         .requestMatchers(HttpMethod.PUT, "/api/projects/**").hasAuthority("EDIT_PROJECTS")
                         .requestMatchers(HttpMethod.DELETE, "/api/projects/**").hasAuthority("DELETE_PROJECTS")

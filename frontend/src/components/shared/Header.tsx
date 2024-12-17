@@ -75,7 +75,14 @@ export const Header: React.FC<HeaderProps> = ({title, navigation}) => {
                                         {navigation.addProject}
                                     </button>
                                 )}
-
+                                {hasAuthority(Authority.ACCESS_KAFKA_DASHBOARD) && navigation.kafkaDashboard && (
+                                    <button
+                                        onClick={() => navigate('/kafka-dashboard')}
+                                        className="text-gray-700 hover:text-gray-900"
+                                    >
+                                        {navigation.kafkaDashboard}
+                                    </button>
+                                )}
                                 <a href="#contact" onClick={(e) => scrollToSection(e, 'contact')}
                                    className="text-gray-700 hover:text-gray-900">{navigation.contact}</a>
                                 <button

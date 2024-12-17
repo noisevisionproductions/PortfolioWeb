@@ -2,18 +2,17 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Dodanie cache'owania dla npm
 RUN mkdir -p /app/.npm-cache
 ENV npm_config_cache=/app/.npm-cache
 
-# Optymalizacja instalacji zależności
 COPY package*.json ./
 RUN npm ci --prefer-offline --no-audit
 
-# Kopiowanie tylko niezbędnych plików konfiguracyjnych
 COPY tsconfig.json vite.config.ts postcss.config.js tailwind.config.js ./
 
-# Zmniejszenie warstw obrazu poprzez połączenie zmiennych środowiskowych
+COPY src/ ./src/
+COPY public/ ./public/
+
 ENV NODE_ENV=development \
     VITE_ENABLE_HMR=true \
     CHOKIDAR_USEPOLLING=true \

@@ -15,7 +15,7 @@ export const useRegistrationStats = () => {
             const data = await registrationStatsService.getStats();
             setStats(data);
         } catch (err) {
-            setError('kafka.errors.stats.statsFetchFailed');
+            setError('kafka.errors.statsFetchFailed');
             console.error('Error fetching stats:', err);
         } finally {
             setLoading(false);
@@ -29,7 +29,7 @@ export const useRegistrationStats = () => {
             const data = await registrationStatsService.getRecentRegistrations(limit);
             setRecentEvents(data);
         } catch (err) {
-            setError('kafka.errors.stats.recentRegistrationsFetchFailed');
+            setError('kafka.errors.registrationsForPeriodFetchFailed');
             console.error('Error fetching recent events:', err);
         } finally {
             setLoading(false);
@@ -43,7 +43,7 @@ export const useRegistrationStats = () => {
             const data = await registrationStatsService.getRegistrationsForPeriod(stats, end);
             setRecentEvents(data);
         } catch (err) {
-            setError('kafka.errors.stats.registrationsForPeriodFetchFailed');
+            setError('kafka.errors.registrationsForPeriodFetchFailed');
             console.error('Error fetching period events:', err);
         } finally {
             setLoading(false);

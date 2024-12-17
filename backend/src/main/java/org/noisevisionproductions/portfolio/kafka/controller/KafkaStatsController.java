@@ -23,20 +23,20 @@ public class KafkaStatsController {
     private final RegistrationStatsService statsService;
 
     @GetMapping("/registrations")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ACCESS_KAFKA_DASHBOARD')")
     public ResponseEntity<RegistrationStats> getRegistrationStats() {
         return ResponseEntity.ok(statsService.getStats());
     }
 
     @GetMapping("/registrations/recent")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ACCESS_KAFKA_DASHBOARD')")
     public ResponseEntity<List<RegistrationEventEntity>> getRecentRegistrations(
             @RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(statsService.getRecentEvents(limit));
     }
 
     @GetMapping("registrations/period")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ACCESS_KAFKA_DASHBOARD')")
     public ResponseEntity<List<RegistrationEventEntity>> getRegistrationsForPeriod(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end

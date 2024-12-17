@@ -39,7 +39,8 @@ export function MainContent() {
                     addProject: t('header.navigation.addProject'),
                     projects: t('header.navigation.projects'),
                     contact: t('header.navigation.contact'),
-                    login: t('header.navigation.login')
+                    login: t('header.navigation.login'),
+                    kafkaDashboard: t('header.navigation.kafkaDashboard')
                 }}
             />
             <main className="pt-16">

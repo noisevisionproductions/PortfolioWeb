@@ -14,7 +14,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({error, onBack, t}) =>
                     {t('projectDetails.error')}
                 </h2>
                 <p className="text-gray-600">
-                    {error}
+                    {error && t(error)}
                 </p>
                 <button
                     onClick={onBack}

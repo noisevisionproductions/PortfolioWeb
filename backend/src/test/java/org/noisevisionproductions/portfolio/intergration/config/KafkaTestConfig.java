@@ -36,7 +36,11 @@ public class KafkaTestConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, UserRegistrationEvent> kafkaListenerContainerFactory() {
-        return mock(ConcurrentKafkaListenerContainerFactory.class);
+        ConcurrentKafkaListenerContainerFactory<String, UserRegistrationEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        factory.setAutoStartup(false);
+        return factory;
     }
 
     @Bean

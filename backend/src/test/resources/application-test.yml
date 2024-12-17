@@ -7,7 +7,11 @@ spring:
 
   kafka:
     enabled: false
+    listener:
+      auto-startup: false
     bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+    consumer:
+      auto-startup: false
 
   autoconfigure:
     exclude:

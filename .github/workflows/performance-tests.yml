@@ -100,7 +100,9 @@ jobs:
             -Dspring.datasource.username=${DB_USER} \
             -Dspring.datasource.password=${DB_PASSWORD} \
             -Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect \
-            -Dspring.jpa.hibernate.ddl-auto=create-drop" &
+            -Dspring.jpa.hibernate.ddl-auto=create-drop \
+            -Dspring.kafka.enabled=false \
+            -Dspring.autoconfigure.exclude=org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration" &
           
           echo "Waiting for application to start..."
           timeout 60 bash -c 'while ! nc -z localhost ${SERVER_PORT}; do sleep 2; done'

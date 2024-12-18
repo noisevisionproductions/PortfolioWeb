@@ -45,8 +45,8 @@ public class RegistrationStatsServiceTest {
 
     @Test
     void shouldGetStats() {
-        when(eventRepository.countSuccessfulRegistrations()).thenReturn(3L);
-        when(eventRepository.countFailedRegistrations()).thenReturn(1L);
+        when(eventRepository.countByStatus(EventStatus.SUCCESS)).thenReturn(3L);
+        when(eventRepository.countByStatus(EventStatus.FAILED)).thenReturn(1L);
         when(eventRepository.findAllByOrderByTimestampDesc()).thenReturn(testEvents);
 
         RegistrationStats stats = statsService.getStats();
@@ -60,8 +60,8 @@ public class RegistrationStatsServiceTest {
 
     @Test
     void shouldReturnZeroStatsWhenNoEvents() {
-        when(eventRepository.countSuccessfulRegistrations()).thenReturn(0L);
-        when(eventRepository.countFailedRegistrations()).thenReturn(0L);
+        when(eventRepository.countByStatus(EventStatus.SUCCESS)).thenReturn(0L);
+        when(eventRepository.countByStatus(EventStatus.FAILED)).thenReturn(0L);
         when(eventRepository.findAllByOrderByTimestampDesc()).thenReturn(List.of());
 
         RegistrationStats stats = statsService.getStats();
@@ -107,8 +107,8 @@ public class RegistrationStatsServiceTest {
             "0, 5, 0.0"
     })
     void shouldCalculateSuccessRate(long successful, long failed, double expectedRate) {
-        when(eventRepository.countSuccessfulRegistrations()).thenReturn(successful);
-        when(eventRepository.countFailedRegistrations()).thenReturn(failed);
+        when(eventRepository.countByStatus(EventStatus.SUCCESS)).thenReturn(successful);
+        when(eventRepository.countByStatus(EventStatus.FAILED)).thenReturn(failed);
         when(eventRepository.findAllByOrderByTimestampDesc()).thenReturn(List.of());
 
         RegistrationStats stats = statsService.getStats();
@@ -122,7 +122,7 @@ public class RegistrationStatsServiceTest {
         event.setEmail(userId + "@example.com");
         event.setName("Test User " + userId);
         event.setCompanyName("Test Company");
-        event.setTimestamp(timestamp);
+        event.setRegistrationTime(timestamp);
         event.setStatus(eventStatus);
         return event;
     }

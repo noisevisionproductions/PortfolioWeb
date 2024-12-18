@@ -19,7 +19,7 @@ import org.noisevisionproductions.portfolio.auth.service.RegistrationService;
 import org.noisevisionproductions.portfolio.auth.service.SuccessfulRegistrationService;
 import org.noisevisionproductions.portfolio.kafka.event.model.EventStatus;
 import org.noisevisionproductions.portfolio.kafka.event.dto.UserRegistrationEvent;
-import org.noisevisionproductions.portfolio.kafka.service.producer.KafkaProducerService;
+import org.noisevisionproductions.portfolio.kafka.service.producer.RegistrationEventProducer;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
@@ -48,7 +48,7 @@ public class RegistrationServiceTest {
     private SuccessfulRegistrationService successfulRegistrationService;
 
     @Mock
-    private KafkaProducerService kafkaProducerService;
+    private RegistrationEventProducer registrationEventProducer;
 
     @Mock
     private IpAddressExtractor ipAddressExtractor;
@@ -105,7 +105,7 @@ public class RegistrationServiceTest {
         ));
         verify(jwtService).generateToken(any(UserModel.class));
         verify(successfulRegistrationService).registerSuccessfulRegistration(ipAddress);
-        verify(kafkaProducerService).sendRegistrationEvent(argThat(event ->
+        verify(registrationEventProducer).sendEvent(argThat(event ->
                 event.getStatus() == EventStatus.SUCCESS &&
                         event.getUserId().equals("1") &&
                         event.getEmail().equals(registerRequest.email())
@@ -136,7 +136,7 @@ public class RegistrationServiceTest {
         verifyNoMoreInteractions(passwordEncoder, jwtService, userRepository);
         verify(successfulRegistrationService, never()).registerSuccessfulRegistration(ipAddress);
 
-        verify(kafkaProducerService).sendRegistrationEvent(eventCaptor.capture());
+        verify(registrationEventProducer).sendEvent(eventCaptor.capture());
         UserRegistrationEvent capturedEvent = eventCaptor.getValue();
         assertThat(capturedEvent.getStatus()).isEqualTo(EventStatus.FAILED);
         assertThat(capturedEvent.getEmail()).isEqualTo(registerRequest.email());
@@ -181,7 +181,7 @@ public class RegistrationServiceTest {
         verify(userRepository).save(argThat(user ->
                 user.getProgrammingLanguages().isEmpty()
         ));
-        verify(kafkaProducerService).sendRegistrationEvent(argThat(event ->
+        verify(registrationEventProducer).sendEvent(argThat(event ->
                 event.getStatus() == EventStatus.SUCCESS &&
                         event.getUserId().equals("1")
         ));
@@ -217,7 +217,7 @@ public class RegistrationServiceTest {
         verify(passwordEncoder).encode("rawPassword");
         verify(userRepository).save(argThat(user ->
                 user.getPassword().equals("encodedPassword")));
-        verify(kafkaProducerService).sendRegistrationEvent(argThat(event ->
+        verify(registrationEventProducer).sendEvent(argThat(event ->
                 event.getStatus() == EventStatus.SUCCESS &&
                         event.getUserId().equals("1")
         ));

@@ -3,6 +3,7 @@ package org.noisevisionproductions.portfolio.kafka.event.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.noisevisionproductions.portfolio.kafka.event.base.BaseEventEntity;
 
 import java.time.LocalDateTime;
 
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "registration_events")
 @Getter
 @Setter
-public class RegistrationEventEntity {
+public class RegistrationEventEntity extends BaseEventEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,11 +28,7 @@ public class RegistrationEventEntity {
     private String companyName;
 
     @Column(nullable = false)
-    private LocalDateTime timestamp;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private EventStatus status;
+    private LocalDateTime registrationTime;
 
     private String ipAddress;
     private String userAgent;

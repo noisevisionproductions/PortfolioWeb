@@ -14,6 +14,8 @@ import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
 import org.noisevisionproductions.portfolio.projectsManagement.model.ProjectStatus;
 import org.noisevisionproductions.portfolio.projectsManagement.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -36,6 +38,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import({TestRedisConfiguration.class, KafkaTestConfig.class})
+@EnableAutoConfiguration(exclude = {
+        KafkaAutoConfiguration.class
+})
 public class ProjectListingIT extends BaseIntegrationTest {
 
     @Autowired

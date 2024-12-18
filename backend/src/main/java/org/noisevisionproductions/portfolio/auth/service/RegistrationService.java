@@ -6,15 +6,14 @@ import org.noisevisionproductions.portfolio.auth.component.IpAddressExtractor;
 import org.noisevisionproductions.portfolio.auth.dto.AuthResponse;
 import org.noisevisionproductions.portfolio.auth.dto.RegisterRequest;
 import org.noisevisionproductions.portfolio.auth.exceptions.EmailAlreadyExistsException;
-import org.noisevisionproductions.portfolio.auth.model.enums.Role;
-import org.springframework.security.core.GrantedAuthority;
-
 import org.noisevisionproductions.portfolio.auth.model.UserModel;
+import org.noisevisionproductions.portfolio.auth.model.enums.Role;
 import org.noisevisionproductions.portfolio.auth.repository.UserRepository;
 import org.noisevisionproductions.portfolio.auth.security.JwtService;
-import org.noisevisionproductions.portfolio.kafka.event.model.EventStatus;
 import org.noisevisionproductions.portfolio.kafka.event.dto.UserRegistrationEvent;
-import org.noisevisionproductions.portfolio.kafka.service.producer.KafkaProducerService;
+import org.noisevisionproductions.portfolio.kafka.event.model.EventStatus;
+import org.noisevisionproductions.portfolio.kafka.service.producer.RegistrationEventProducer;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,7 @@ public class RegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final SuccessfulRegistrationService registrationRateLimiter;
-    private final KafkaProducerService kafkaProducerService;
+    private final RegistrationEventProducer registrationEventProducer;
     private final IpAddressExtractor ipAddressExtractor;
 
     public AuthResponse register(RegisterRequest registerRequest, HttpServletRequest request) {
@@ -38,22 +37,21 @@ public class RegistrationService {
         registrationRateLimiter.canRegister(ipAddress);
 
         try {
-
             if (userRepository.existsByEmail(registerRequest.email())) {
-                publishRegistrationEvent(registerRequest);
+                publishRegistrationEvent(registerRequest, ipAddress, request.getHeader("User-Agent"));
                 throw new EmailAlreadyExistsException();
             }
 
             UserModel savedUser = createAndSaveUser(registerRequest);
             registrationRateLimiter.registerSuccessfulRegistration(ipAddress);
-            publishRegistrationEvent(savedUser);
+            publishRegistrationEvent(savedUser, ipAddress, request.getHeader("User-Agent"));
 
             String token = jwtService.generateToken(savedUser);
             return buildAuthResponse(savedUser, token);
         } catch (EmailAlreadyExistsException e) {
             throw e;
         } catch (Exception e) {
-            publishRegistrationEvent(registerRequest);
+            publishRegistrationEvent(registerRequest, ipAddress, request.getHeader("User-Agent"));
             throw e;
         }
     }
@@ -70,7 +68,7 @@ public class RegistrationService {
         return userRepository.save(userModel);
     }
 
-    private void publishRegistrationEvent(UserModel user) {
+    private void publishRegistrationEvent(UserModel user, String ipAddress, String userAgent) {
         UserRegistrationEvent event = UserRegistrationEvent.builder()
                 .userId(user.getId().toString())
                 .email(user.getEmail())
@@ -78,21 +76,29 @@ public class RegistrationService {
                 .companyName(user.getCompanyName())
                 .timestamp(LocalDateTime.now())
                 .status(EventStatus.SUCCESS)
+                .registrationTime(LocalDateTime.now())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .registrationSource("WEB")
                 .build();
 
-        kafkaProducerService.sendRegistrationEvent(event);
+        registrationEventProducer.sendEvent(event);
     }
 
-    private void publishRegistrationEvent(RegisterRequest request) {
+    private void publishRegistrationEvent(RegisterRequest request, String ipAddress, String userAgent) {
         UserRegistrationEvent event = UserRegistrationEvent.builder()
                 .email(request.email())
                 .name(request.name())
                 .companyName(request.companyName())
                 .timestamp(LocalDateTime.now())
                 .status(EventStatus.FAILED)
+                .registrationTime(LocalDateTime.now())
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .registrationSource("WEB")
                 .build();
 
-        kafkaProducerService.sendRegistrationEvent(event);
+        registrationEventProducer.sendEvent(event);
     }
 
     private AuthResponse buildAuthResponse(UserModel user, String token) {

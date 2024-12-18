@@ -11,5 +11,7 @@ public interface CacheService<K, V> {
 
     void invalidate(K key);
 
+    void invalidateProjectsList();
+
     void invalidateAll(String pattern);
 }

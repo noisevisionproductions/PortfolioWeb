@@ -2,6 +2,7 @@ package org.noisevisionproductions.portfolio.projectsManagement.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.noisevisionproductions.portfolio.projectsManagement.service.FileStorageService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +19,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
+@Slf4j
 public class FileController {
 
     private final FileStorageService fileStorageService;
@@ -34,7 +36,7 @@ public class FileController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
                     .body(resource);
         } catch (Exception e) {
-            System.out.println("Error serving file: " + fileName + e);
+            log.error("Error serving file: {}", fileName, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

@@ -23,7 +23,8 @@ export const translations = {
             },
             image: {
                 add: "Błąd podczas dodawania obrazu",
-                delete: "Błąd podczas usuwania obrazu"
+                delete: "Błąd podczas usuwania obrazu",
+                missingProjectId: "Brak ID projektu"
             }
         },
         header: {
@@ -131,7 +132,9 @@ export const translations = {
             fetchError: "Nie udało się pobrać danych projektu",
             successTitle: "Projekt został stworzony",
             successDescription: "Projekt utworzony, kliknij OK, aby przejść do menu głównego",
-            projectForm: "Zostaniesz przeniesiony do Menu Głównego"
+            projectForm: "Zostaniesz przeniesiony do Menu Głównego",
+            imageLoadError: "Błąd podczas ładowania obrazu",
+            imageLoadErrorDetail: "Nie udało się załadować obrazu. Plik mógł zostać usunięty."
         },
         projectDetails: {
             confirmDelete: "Czy na pewno chcesz usunąć ten projekt?",
@@ -204,7 +207,8 @@ export const translations = {
             },
             image: {
                 add: "An error occurred while adding an image",
-                delete: "An error occurred while deleting an image"
+                delete: "An error occurred while deleting an image",
+                missingProjectId: "Project ID is missing"
             }
         },
         header: {
@@ -314,7 +318,9 @@ export const translations = {
             fetchError: "Failed to get project data",
             successTitle: "Project has been created",
             successDescription: "Project created, click OK to switch to Main Menu",
-            projectForm: "You will be taken to the Main Menu"
+            projectForm: "You will be taken to the Main Menu",
+            imageLoadError: "Failed to load image",
+            imageLoadErrorDetail: "Unable to load image. The file may have been moved or deleted."
         },
         projectDetails: {
             confirmDelete: "Are you sure you want to delete this project?",

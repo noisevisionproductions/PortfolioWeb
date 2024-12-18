@@ -122,6 +122,17 @@ public class ProjectCacheService implements CacheService<Long, Project> {
     }
 
     @Override
+    public void invalidateProjectsList() {
+        try {
+            String key = keyGenerator.generateKey(CACHE_PREFIX, "all");
+            redisTemplate.delete(key);
+            log.debug("Successfully invalidated projects list cache");
+        } catch (Exception e) {
+            log.error("Failed to invalidate projects list cache", e);
+        }
+    }
+
+    @Override
     public void invalidateAll(String pattern) {
         try {
             Set<String> keys = redisTemplate.keys(CACHE_PREFIX + pattern);

@@ -1,6 +1,6 @@
 import {vi, expect, describe, beforeEach, test} from "vitest";
 import api from "@/utils/axios";
-import {EventStatus} from "@/kafka/types/registrationEvent";
+import {EventStatus} from "@/kafka/types/baseEvent";
 import {registrationStatsService} from "@/kafka/services/registrationStatsService";
 
 vi.mock('@/utils/axios', () => ({

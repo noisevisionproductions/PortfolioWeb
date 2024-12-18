@@ -42,8 +42,6 @@ class ProjectServiceTest {
     @InjectMocks
     private ProjectService projectService;
 
-    private static final Long ALL_PROJECTS_KEY = 0L;
-
     @Test
     void getAllProjects_ShouldReturnCachedProjects_WhenCacheExists() {
         List<Project> cachedProjects = Arrays.asList(
@@ -137,7 +135,7 @@ class ProjectServiceTest {
         verify(projectMapper).toEntity(projectDTO);
         verify(projectRepository).save(expectedProject);
         verify(projectCacheService).cache(expectedProject.getId(), expectedProject);
-        verify(projectCacheService).invalidate(0L);
+        verify(projectCacheService).invalidateProjectsList();
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
@@ -156,7 +154,7 @@ class ProjectServiceTest {
         projectService.createProject(projectDTO);
 
         verify(projectCacheService).cache(project.getId(), project);
-        verify(projectCacheService).invalidate(ALL_PROJECTS_KEY);
+        verify(projectCacheService).invalidateProjectsList();
     }
 
     @Test
@@ -190,7 +188,7 @@ class ProjectServiceTest {
         projectService.updateProject(projectId, projectDTO);
 
         verify(projectCacheService).cache(projectId, updatedProject);
-        verify(projectCacheService).invalidate(ALL_PROJECTS_KEY);
+        verify(projectCacheService).invalidateProjectsList();
     }
 
     @Test
@@ -213,7 +211,7 @@ class ProjectServiceTest {
         verify(fileStorageService).deleteFile("/images/2.jpg");
         verify(projectRepository).delete(project);
         verify(projectCacheService).invalidate(projectId);
-        verify(projectCacheService).invalidate(ALL_PROJECTS_KEY);
+        verify(projectCacheService).invalidateProjectsList();
 
         assertThat(project.getProjectImages()).isEmpty();
         assertThat(project.getContributors()).isEmpty();
@@ -232,7 +230,7 @@ class ProjectServiceTest {
         projectService.deleteProject(projectId);
 
         verify(projectCacheService).invalidate(projectId);
-        verify(projectCacheService).invalidate(ALL_PROJECTS_KEY);
+        verify(projectCacheService).invalidateProjectsList();
     }
 
     @Test
@@ -265,7 +263,7 @@ class ProjectServiceTest {
         projectService.updateFeatures(projectId, newFeatures);
 
         verify(projectCacheService).cache(projectId, updatedProject);
-        verify(projectCacheService).invalidate(ALL_PROJECTS_KEY);
+        verify(projectCacheService).invalidateProjectsList();
     }
 
     @Test

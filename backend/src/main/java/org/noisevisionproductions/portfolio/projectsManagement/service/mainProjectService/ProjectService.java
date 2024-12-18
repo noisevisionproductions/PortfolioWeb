@@ -20,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ProjectService {
-    private static final Long ALL_PROJECTS_KEY = 0L;
     private static final String LOG_INIT_ERROR = "Error initializing collections for project {}: {}";
 
     private final ProjectRepository projectRepository;
@@ -31,16 +30,15 @@ public class ProjectService {
     public Project createProject(ProjectDTO projectDTO) {
         Project project = projectMapper.toEntity(projectDTO);
         project = projectRepository.save(project);
+
         if (project.getId() == null) {
             throw new RuntimeException("Project ID was not generated");
         }
-        Hibernate.initialize(project.getProjectImages());
-        Hibernate.initialize(project.getFeatures());
-        Hibernate.initialize(project.getTechnologies());
-        Hibernate.initialize(project.getContributors());
+
+        initializeProjectCollections(project, "new:");
 
         projectCacheService.cache(project.getId(), project);
-        projectCacheService.invalidate(ALL_PROJECTS_KEY);
+        projectCacheService.invalidateProjectsList();
 
         return project;
     }
@@ -51,7 +49,7 @@ public class ProjectService {
 
         Project updatedProject = projectRepository.save(existingProject);
         projectCacheService.cache(id, updatedProject);
-        projectCacheService.invalidate(ALL_PROJECTS_KEY);
+        projectCacheService.invalidateProjectsList();
 
         return updatedProject;
     }
@@ -66,16 +64,7 @@ public class ProjectService {
 
         List<Project> projects = projectRepository.findAll();
 
-        projects.forEach(project -> {
-            try {
-                Hibernate.initialize(project.getProjectImages());
-                Hibernate.initialize(project.getContributors());
-                Hibernate.initialize(project.getFeatures());
-                Hibernate.initialize(project.getTechnologies());
-            } catch (Exception e) {
-                log.error(LOG_INIT_ERROR, project.getId(), e.getMessage());
-            }
-        });
+        projects.forEach(project -> initializeProjectCollections(project, "list:"));
 
         if (!projects.isEmpty()) {
             log.info("Caching {} projects", projects.size());
@@ -88,31 +77,16 @@ public class ProjectService {
     public Project getProjectById(Long id) {
         Project cachedProject = projectCacheService.get(id);
         if (cachedProject != null) {
-            try {
-                Hibernate.initialize(cachedProject.getProjectImages());
-                Hibernate.initialize(cachedProject.getContributors());
-                Hibernate.initialize(cachedProject.getFeatures());
-                Hibernate.initialize(cachedProject.getTechnologies());
-
-                return cachedProject;
-            } catch (Exception e) {
-                log.error(LOG_INIT_ERROR, id, e.getMessage());
-            }
+            initializeProjectCollections(cachedProject, "cached");
+            return cachedProject;
         }
 
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException("Project not found with id: " + id));
 
-        try {
-            Hibernate.initialize(project.getProjectImages());
-            Hibernate.initialize(project.getContributors());
-            Hibernate.initialize(project.getFeatures());
-            Hibernate.initialize(project.getTechnologies());
-            projectCacheService.cache(id, project);
-            log.info("Project with ID {} has been cached.", id);
-        } catch (Exception e) {
-            log.error(LOG_INIT_ERROR, id, e.getMessage());
-        }
+        initializeProjectCollections(project, "id:");
+        projectCacheService.cache(id, project);
+        log.info("Project with ID {} has been cached.", id);
 
         return project;
     }
@@ -122,14 +96,7 @@ public class ProjectService {
         Project project = projectRepository.findBySlug(slug)
                 .orElseThrow(() -> new RuntimeException("Project not found with slug: " + slug));
 
-        try {
-            Hibernate.initialize(project.getFeatures());
-            Hibernate.initialize(project.getTechnologies());
-            Hibernate.initialize(project.getContributors());
-            Hibernate.initialize(project.getProjectImages());
-        } catch (Exception e) {
-            log.error("Error initializing collections for project with slug {}: {}", slug, e.getMessage());
-        }
+        initializeProjectCollections(project, "slug:");
 
         Long projectId = project.getId();
         Project cachedProject = projectCacheService.get(projectId);
@@ -162,7 +129,7 @@ public class ProjectService {
 
             try {
                 projectCacheService.invalidate(id);
-                projectCacheService.invalidate(ALL_PROJECTS_KEY);
+                projectCacheService.invalidateProjectsList();
             } catch (Exception e) {
                 log.error("Failed to invalidate cache for project: {}", id, e);
             }
@@ -179,8 +146,21 @@ public class ProjectService {
         Project updatedProject = projectRepository.save(project);
 
         projectCacheService.cache(projectId, updatedProject);
-        projectCacheService.invalidate(ALL_PROJECTS_KEY);
+        projectCacheService.invalidateProjectsList();
 
         return updatedProject;
+    }
+
+    private void initializeProjectCollections(Project project, String context) {
+        try {
+            Hibernate.initialize(project.getProjectImages());
+            Hibernate.initialize(project.getContributors());
+            Hibernate.initialize(project.getFeatures());
+            Hibernate.initialize(project.getTechnologies());
+        } catch (Exception e) {
+            String identifier = context + (project.getId() != null ? project.getId() : project.getSlug());
+            log.error(LOG_INIT_ERROR, identifier, e.getMessage());
+            throw new RuntimeException("Failed to initialize project collections: " + identifier, e);
+        }
     }
 }

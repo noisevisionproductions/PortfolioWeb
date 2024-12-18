@@ -1,8 +1,9 @@
-import {EventStatus, RegistrationEvent} from "@/kafka/types/registrationEvent";
+import {EventStatus} from "@/kafka/types/baseEvent";
 import React from "react";
 import {useTranslation} from "react-i18next";
 import {format} from 'date-fns';
 import {pl} from 'date-fns/locale';
+import {RegistrationEvent} from "@/kafka/types/registrationEvent";
 
 interface RecentRegistrationsProps {
     events: RegistrationEvent[];

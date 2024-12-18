@@ -1,4 +1,5 @@
-import {EventStatus, RegistrationEvent} from "@/kafka/types/registrationEvent";
+import {RegistrationEvent} from "@/kafka/types/registrationEvent";
+import {EventStatus} from "@/kafka/types/baseEvent";
 import {Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
 import React from "react";
 import {pl} from 'date-fns/locale';

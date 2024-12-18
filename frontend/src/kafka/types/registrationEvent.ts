@@ -1,16 +1,12 @@
-export enum EventStatus {
-    SUCCESS = 'SUCCESS',
-    FAILED = 'FAILED'
-}
+import {BaseEvent} from "@/kafka/types/baseEvent";
 
-export interface RegistrationEvent {
+export interface RegistrationEvent extends BaseEvent {
     id: number;
     userId: string;
     email: string;
     name: string | null;
     companyName: string | null;
-    timestamp: string;
-    status: EventStatus;
+    registrationTime: string;
     ipAddress: string | null;
     userAgent: string | null;
     registrationSource: string | null;

@@ -1,33 +1,24 @@
-import api from "@/utils/axios";
+import {BaseStatsService} from "@/kafka/services/base/BaseStatsService";
 import {RegistrationEvent, RegistrationStats} from "@/kafka/types/registrationEvent";
+import api from "@/utils/axios";
 
-export const registrationStatsService = {
-    getStats: async (): Promise<RegistrationStats> => {
-        const response = await api.get<RegistrationStats>('/api/kafka/stats/registrations');
-        return response.data;
-    },
+class RegistrationStatsService extends BaseStatsService<RegistrationEvent> {
+    constructor() {
+        super('/api/kafka/stats/registrations');
+    }
 
-    getRecentRegistrations: async (limit: number = 10): Promise<RegistrationEvent[]> => {
-        const response = await api.get<RegistrationEvent[]>(
-            '/api/kafka/stats/registrations/recent',
-            {params: {limit}}
-        );
-        return response.data;
-    },
-
-    getRegistrationsForPeriod: async (
-        start: Date,
-        end: Date
-    ): Promise<RegistrationEvent[]> => {
-        const response = await api.get<RegistrationEvent[]>(
-            '/api/kafka/stats/registrations/period',
-            {
-                params: {
-                    start: start.toISOString(),
-                    end: end.toISOString()
-                }
-            }
-        );
+    async getStats(): Promise<RegistrationStats> {
+        const response = await api.get<RegistrationStats>(this.basePath);
         return response.data;
     }
-};
+
+    async getRecentRegistrations(limit: number = 10): Promise<RegistrationEvent[]> {
+        return this.getRecentEvents(limit);
+    }
+
+    async getRegistrationsForPeriod(start: Date, end: Date): Promise<RegistrationEvent[]> {
+        return this.getEventsForPeriod(start, end);
+    }
+}
+
+export const registrationStatsService = new RegistrationStatsService();

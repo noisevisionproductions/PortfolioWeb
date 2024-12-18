@@ -1,6 +1,7 @@
 package org.noisevisionproductions.portfolio.projectsManagement.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.noisevisionproductions.portfolio.projectsManagement.dto.ProjectImageDTO;
 import org.noisevisionproductions.portfolio.projectsManagement.model.ImageFromProject;
 import org.noisevisionproductions.portfolio.projectsManagement.model.Project;
@@ -17,6 +18,7 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/projects")
 @RequiredArgsConstructor
+@Slf4j
 public class ProjectImageController {
 
     private final ProjectService projectService;
@@ -48,6 +50,7 @@ public class ProjectImageController {
     ) {
         try {
             if (file.isEmpty()) {
+                log.warn("Empty file received");
                 return ResponseEntity.badRequest().build();
             }
 
@@ -55,14 +58,16 @@ public class ProjectImageController {
             if (project == null) {
                 return ResponseEntity.notFound().build();
             }
-
+            log.info("Processing file: {}", file.getOriginalFilename());
             String imageUrl = fileStorageService.storeFile(file);
+            log.info("File stored, URL: {}", imageUrl);
 
             ProjectImageDTO imageDTO = new ProjectImageDTO();
             imageDTO.setImageUrl(imageUrl);
             imageDTO.setCaption(file.getOriginalFilename());
 
             ImageFromProject added = projectImageService.addImageToProject(projectId, imageDTO);
+            log.info("Image added to project, ID: {}", added.getId());
 
             ProjectImageDTO responseDTO = new ProjectImageDTO();
             responseDTO.setId(added.getId());

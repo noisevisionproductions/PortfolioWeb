@@ -2,6 +2,7 @@ package org.noisevisionproductions.portfolio.projectsManagement.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.noisevisionproductions.portfolio.projectsManagement.component.FileStorageProperties;
 import org.noisevisionproductions.portfolio.projectsManagement.exceptions.FileStorageException;
 import org.springframework.core.io.Resource;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FileStorageService {
 
     private final FileStorageProperties properties;
@@ -33,8 +35,11 @@ public class FileStorageService {
                 .toAbsolutePath()
                 .normalize();
 
+        log.info("Files will be stored in: {}", this.fileStorageLocation);
+
         try {
             Files.createDirectories(this.fileStorageLocation);
+            log.info("Storage directory created/verified successfully");
         } catch (IOException e) {
             throw new FileStorageException("Could not create upload directory", e);
         }
@@ -42,6 +47,7 @@ public class FileStorageService {
 
     public String storeFile(MultipartFile file) {
         String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        log.info("Attempting to store file: {}", fileName);
 
         if (fileName.contains("..")) {
             throw new FileStorageException("Invalid filename: " + fileName);
@@ -49,11 +55,17 @@ public class FileStorageService {
 
         try {
             String uniqueFileName = UUID.randomUUID() + "_" + fileName;
+            Path targetLocation = this.fileStorageLocation.resolve(uniqueFileName);
+
+            log.info("Storing file to: {}", targetLocation.toAbsolutePath());
+
             Files.copy(
                     file.getInputStream(),
-                    this.fileStorageLocation.resolve(uniqueFileName),
+                    targetLocation,
                     StandardCopyOption.REPLACE_EXISTING
             );
+
+            log.info("File stored successfully: {}", uniqueFileName);
             return "/api/files/" + uniqueFileName;
         } catch (IOException e) {
             throw new FileStorageException("Failed to store file: " + fileName, e);

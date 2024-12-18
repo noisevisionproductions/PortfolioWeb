@@ -16,7 +16,8 @@ export const ProjectImageProvider: React.FC<{ children: React.ReactNode }> = ({c
         setLoading(true);
         try {
             if (!projectId) {
-                throw new Error('Project ID is required for image upload');
+                setError(t('errors.image.missingProjectId'))
+                return;
             }
             console.log('Uploading image for project:', projectId);
 

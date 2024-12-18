@@ -132,10 +132,12 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_REDIS_HOST=redis
       - SPRING_REDIS_PORT=6379
+      - FILE_UPLOAD_DIR=/workspace/app/uploads
     ports:
       - "8080:8080"
       - "5005:5005"
     volumes:
+      - ./uploads:/workspace/app/uploads:rw
       - ./backend:/workspace/app
       - backend_maven_cache:/root/.m2
     networks:
@@ -147,6 +149,12 @@ services:
         reservations:
           memory: 2G
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:

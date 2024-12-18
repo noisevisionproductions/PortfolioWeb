@@ -23,14 +23,28 @@ public class RegistrationEventEntity extends BaseEventEntity {
     @Column(nullable = false)
     private String email;
 
+    @Column()
     private String name;
 
+    @Column()
     private String companyName;
 
     @Column(nullable = false)
     private LocalDateTime registrationTime;
 
+    @Column(length = 45)
     private String ipAddress;
+
+    @Column(length = 500)
     private String userAgent;
+
+    @Column(length = 50)
     private String registrationSource;
+
+    @PrePersist
+    private void onCreate() {
+        if (registrationTime == null) {
+            registrationTime = LocalDateTime.now();
+        }
+    }
 }

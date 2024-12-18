@@ -16,22 +16,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const {user, loading, hasAuthority} = useBaseAuthContext();
     const location = useLocation();
 
-    if (loading) {
-        return <LoadingSpinner/>;
-    }
-
     const hasRequiredAuthorities = React.useMemo(() =>
             requiredAuthorities.length === 0 ||
             requiredAuthorities.every(authority => hasAuthority(authority)),
         [requiredAuthorities, hasAuthority]
     );
 
+    if (loading) {
+        return <LoadingSpinner/>;
+    }
+
     if (!user) {
         return <Navigate to="/login" state={{from: location}} replace/>;
     }
-
-    /*   const hasRequiredAuthorities = requiredAuthorities.length === 0 ||
-           requiredAuthorities.every(authority => hasAuthority(authority));*/
 
     if (!hasRequiredAuthorities) {
         return <Navigate to="/unauthorized" replace/>;
